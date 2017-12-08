@@ -77,7 +77,7 @@ int main()
 	// input parameters
 	const double T0 = 0.6 * GEV_TO_INVERSE_FM;  // initial temperature in fm^-1
 	const double tau0 = 0.25;					// initial time in fm
-	const double tauf = 20.0;					// final time in fm
+	const double tauf = 30.0;					// final time in fm
 
 
 	// initial anisotropic parameters (equilibrium initial conditions)
@@ -127,7 +127,7 @@ int main()
 	double tau = tau0;
 	const double dtau = 0.001;
 	const int n = floor((tauf - tau0) / dtau);
-	const int timesteps_per_write = 100000;
+	const int timesteps_per_write = 10;
 
 	// Data files for plots
 	ofstream eplot, piplot, bulkplot, plptplot;
@@ -148,9 +148,9 @@ int main()
 	RbulkInvplot.open("RbulkInvplot.dat", ios::out);
 
 
-	eplot << "tau [fm]" << "\t\t" << "e/e0" << endl << setprecision(5) << tau << "\t\t" << 1.0 << endl;
+	eplot << "tau [fm]" << "\t\t" << "e/e0" << endl << setprecision(5) << tau << "\t\t" << e << endl;
 	piplot << "tau [fm]" << "\t\t" << "pi [GeV/fm^3]" << endl << setprecision(5) << tau << "\t\t" << 0.0 << endl;
-	bulkplot << "tau [fm]" << "\t\t" << "Pi [GeV/fm^3]" << endl << setprecision(5) << tau << "\t\t" << 0.0 / GEV_TO_INVERSE_FM << endl;
+	bulkplot << "tau [fm]" << "\t\t" << "Pi [GeV/fm^3]" << endl << setprecision(5) << tau << "\t\t" << 0.0 << endl;
 	plptplot << "tau [fm]" << "\t\t" << "PL/PT" << endl << setprecision(5) << tau << "\t\t" << (p + pl - equilibriumKineticPressure(T)) / (p + pt - equilibriumKineticPressure(T)) << endl;
 
 	Tplot << "tau [fm]" << "\t\t" << "T [fm^-1]" << endl << setprecision(5) << tau << "\t\t" << T << endl;
@@ -218,9 +218,9 @@ int main()
 		if((i+1)%timesteps_per_write == 0)
 		{
 			// energy density, etc
-			eplot << setprecision(5) << tau << "\t\t" << e / e0 << "\t\t" << endl;
-			piplot << setprecision(5) << tau << "\t\t" << 2.0*(pt-pl)/3.0 / GEV_TO_INVERSE_FM << "\t\t" << endl;
-			bulkplot << setprecision(5) << tau << "\t\t" << (2.0*pt/3.0 + pl/3.0 - pkinetic) / GEV_TO_INVERSE_FM << "\t\t" << endl;
+			eplot << setprecision(5) << tau << "\t\t" << e << "\t\t" << endl;
+			piplot << setprecision(5) << tau << "\t\t" << 2.0*(pt-pl)/3.0 << "\t\t" << endl;
+			bulkplot << setprecision(5) << tau << "\t\t" << (2.0*pt/3.0 + pl/3.0 - pkinetic) << "\t\t" << endl;
 			plptplot << setprecision(5) << tau << "\t\t" << (p + pl - pkinetic) / (p + pt - pkinetic) << "\t\t" << endl;
 
 			// temperature and anisotropic variables
@@ -229,7 +229,7 @@ int main()
 			axplot << setprecision(5) << tau << "\t\t" << ax << "\t\t" << endl;
 			azplot << setprecision(5) << tau << "\t\t" << az << "\t\t" << endl;
 
-			cout << "Hey" << endl;
+			//cout << "Hey" << endl;
 
 			// inverse Reynolds numbers
 			RpiInvplot << setprecision(5) << tau << "\t\t" << sqrt(1.5) * 2.0*(pt-pl)/3.0 / (e+p) << "\t\t" << endl;
