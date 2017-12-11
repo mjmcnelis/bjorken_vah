@@ -14,15 +14,15 @@ using namespace std;
 #include "evolution.hpp"
 #include "inferredvariables.hpp"
 #include "anisotropicvariables.hpp"
+#include "anisotropic_transport.hpp"
 
 //#include <gsl/gsl_sf.h>
 
 
 #define GEV_TO_INVERSE_FM 5.067731
-
 //temporary
 const int alpha = 21;
-const int gla_pts = 16;
+const int gla_pts = 32;
 double root_gla[alpha][gla_pts];
 double weight_gla[alpha][gla_pts];
 
@@ -59,7 +59,6 @@ int main()
     double duration;
     begin = clock();
 
-
  //    int num_error;
 	// // Load gauss laguerre roots-weights
 	// if((num_error = load_gauss_laguerre_data()) != 0)
@@ -67,10 +66,10 @@ int main()
 	// 	fprintf(stderr, "Error loading gauss data (%d)!\n", num_error);
 	// 	return 1;
 	// }
-	// for(int k = 0; k < gla_pts; k++) cout << setprecision(15) << root_gla[3][k] << ",";
-	// printf("\n\n\n");
-	// for(int k = 0; k < gla_pts; k++) cout << setprecision(15) << weight_gla[3][k] << ",";
 
+	// for(int k = 0; k < gla_pts; k++) cout << setprecision(15) << root_gla[0][k] << ",";
+	// printf("\n\n\n");
+	// for(int k = 0; k < gla_pts; k++) cout << setprecision(15) << weight_gla[0][k] << ",";
 
 	// Bjorken flow
 
@@ -79,6 +78,7 @@ int main()
 	const double tau0 = 0.25;					// initial time in fm
 	const double tauf = 30.0;					// final time in fm
 
+	double mbar0 = z_Quasiparticle(T0);
 
 	// initial anisotropic parameters (equilibrium initial conditions)
 	double lambda = T0;
@@ -86,7 +86,14 @@ int main()
 	double az = 1.0;
 
 	double T = T0;    // for plotting purposes
-	double pkinetic = equilibriumKineticPressure(T0);
+	double mbar = mbar0;
+	//double pkinetic = equilibriumKineticPressure(T0);
+
+
+
+	double pkinetic = I21_function(T0,mbar0);
+
+
 
 	// initial flow profile
 	double ut = 1.0;
@@ -101,6 +108,9 @@ int main()
 	const double p0 = equilibriumPressure(e0);
 	double p = p0;
 
+	double piNS =  4.0 * (e0+p0) / (3.0*T0*tau0) * shearViscosityToEntropyDensity(T0);
+	double bulkNS = - (e0+p0) / (tau0*T0) * bulkViscosityToEntropyDensity(T0);
+
 
 
 	// initial T^{\tau\mu} components (units = [fm^-4])
@@ -110,8 +120,11 @@ int main()
 	double Ttn = 0.0;
 
 	// initialize kinetic pl and pt (quasiparticle equilibrium w/o B(T))
-	double pl = equilibriumKineticPressure(T0);
-	double pt = equilibriumKineticPressure(T0);   // temporary
+	//double pl = equilibriumKineticPressure(T0);
+	//double pt = equilibriumKineticPressure(T0);   // temporary
+
+	double pl = I21_function(T0,mbar0);
+	double pt = I21_function(T0,mbar0);
 
 
 	// intermediate and end values
@@ -133,24 +146,27 @@ int main()
 	ofstream eplot, piplot, bulkplot, plptplot;
 	ofstream Tplot, lambdaplot, axplot, azplot;
 	ofstream RpiInvplot, RbulkInvplot;
+	ofstream piNSplot, bulkNSplot;
 
-	eplot.open("eplot.dat", ios::out);
-	piplot.open("piplot.dat", ios::out);
-	bulkplot.open("bulkplot.dat", ios::out);
-	plptplot.open("plptplot.dat", ios::out);
+	eplot.open("eplot_vah.dat", ios::out);
+	piplot.open("piplot_vah.dat", ios::out);
+	bulkplot.open("bulkplot_vah.dat", ios::out);
+	plptplot.open("plptplot_vah.dat", ios::out);
 
-	Tplot.open("Tplot.dat", ios::out);
-	lambdaplot.open("lambdaplot.dat", ios::out);
-	axplot.open("axplot.dat", ios::out);
-	azplot.open("azplot.dat", ios::out);
+	Tplot.open("Tplot_vah.dat", ios::out);
+	lambdaplot.open("lambdaplot_vah.dat", ios::out);
+	axplot.open("axplot_vah.dat", ios::out);
+	azplot.open("azplot_vah.dat", ios::out);
 
-	RpiInvplot.open("RpiInvplot.dat", ios::out);
-	RbulkInvplot.open("RbulkInvplot.dat", ios::out);
+	RpiInvplot.open("RpiInvplot_vah.dat", ios::out);
+	RbulkInvplot.open("RbulkInvplot_vah.dat", ios::out);
 
+	piNSplot.open("piNSplot_vah.dat", ios::out);
+	bulkNSplot.open("bulkNSplot_vah.dat", ios::out);
 
-	eplot << "tau [fm]" << "\t\t" << "e/e0" << endl << setprecision(5) << tau << "\t\t" << e << endl;
-	piplot << "tau [fm]" << "\t\t" << "pi [GeV/fm^3]" << endl << setprecision(5) << tau << "\t\t" << 0.0 << endl;
-	bulkplot << "tau [fm]" << "\t\t" << "Pi [GeV/fm^3]" << endl << setprecision(5) << tau << "\t\t" << 0.0 << endl;
+	eplot << "tau [fm]" << "\t\t" << "e/e0" << endl << setprecision(5) << tau << "\t\t" << e/e0 << endl;
+	piplot << "tau [fm]" << "\t\t" << "pi [fm^-4]" << endl << setprecision(5) << tau << "\t\t" << 0.0 << endl;
+	bulkplot << "tau [fm]" << "\t\t" << "Pi [fm^-4]" << endl << setprecision(5) << tau << "\t\t" << 0.0 << endl;
 	plptplot << "tau [fm]" << "\t\t" << "PL/PT" << endl << setprecision(5) << tau << "\t\t" << (p + pl - equilibriumKineticPressure(T)) / (p + pt - equilibriumKineticPressure(T)) << endl;
 
 	Tplot << "tau [fm]" << "\t\t" << "T [fm^-1]" << endl << setprecision(5) << tau << "\t\t" << T << endl;
@@ -160,6 +176,9 @@ int main()
 
 	RpiInvplot << "tau [fm]" << "\t\t" << "R_pi^-1" << endl << setprecision(5) << tau << "\t\t" << 0.0 << endl;
 	RbulkInvplot << "tau [fm]" << "\t\t" << "R_Pi^-1" << endl << setprecision(5) << tau << "\t\t" << 0.0 << endl;
+
+	piNSplot << "tau [fm]" << "\t\t" << "piNS" << endl << setprecision(5) << tau << "\t\t" << piNS << endl;
+	bulkNSplot << "tau [fm]" << "\t\t" << "bulkNS" << endl << setprecision(5) << tau << "\t\t" << bulkNS << endl;
 
 
 	// evolution
@@ -211,14 +230,20 @@ int main()
 		get_anisotropic_variables(e, pl, pt, &lambda, &ax, &az);
 
 		T = effectiveTemperature(e);  // for plots
-		pkinetic = equilibriumKineticPressure(T);
+		//pkinetic = equilibriumKineticPressure(T);
+
+		mbar = z_Quasiparticle(T);
+		pkinetic = I21_function(T,mbar);
+
+		piNS = 4.0 * (e+p) / (3.0*T*tau) * shearViscosityToEntropyDensity(T);
+		bulkNS = - (e+p) / (tau*T) * bulkViscosityToEntropyDensity(T);
 
 
 		// write updated energy density to file
 		if((i+1)%timesteps_per_write == 0)
 		{
 			// energy density, etc
-			eplot << setprecision(5) << tau << "\t\t" << e << "\t\t" << endl;
+			eplot << setprecision(5) << tau << "\t\t" << e/e0 << "\t\t" << endl;
 			piplot << setprecision(5) << tau << "\t\t" << 2.0*(pt-pl)/3.0 << "\t\t" << endl;
 			bulkplot << setprecision(5) << tau << "\t\t" << (2.0*pt/3.0 + pl/3.0 - pkinetic) << "\t\t" << endl;
 			plptplot << setprecision(5) << tau << "\t\t" << (p + pl - pkinetic) / (p + pt - pkinetic) << "\t\t" << endl;
@@ -232,12 +257,13 @@ int main()
 			//cout << "Hey" << endl;
 
 			// inverse Reynolds numbers
-			RpiInvplot << setprecision(5) << tau << "\t\t" << sqrt(1.5) * 2.0*(pt-pl)/3.0 / (e+p) << "\t\t" << endl;
+			RpiInvplot << setprecision(5) << tau << "\t\t" << sqrt(1.5) * 2.0*(pt-pl)/3.0 / p << "\t\t" << endl;
 			RbulkInvplot << setprecision(5) << tau << "\t\t" << (2.0*pt/3.0 + pl/3.0 - pkinetic) / p  << "\t\t" << endl;
+
+			piNSplot << setprecision(5) << tau << "\t\t" << piNS << "\t\t" << endl;
+			bulkNSplot << setprecision(5) << tau << "\t\t" << bulkNS  << "\t\t" << endl;
 		}
 	}
-
-
 
 	// close plot data files
 	eplot.close();
@@ -252,6 +278,9 @@ int main()
 
 	RpiInvplot.close();
 	RbulkInvplot.close();
+
+	piNSplot.close();
+	bulkNSplot.close();
 
 	printf("...done\n\n");
 

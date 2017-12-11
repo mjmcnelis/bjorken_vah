@@ -5,7 +5,7 @@
 using namespace std;
 #include "evolution.hpp"
 #include "qcd.hpp"
-#include "anisotropic_functions.hpp"
+#include "anisotropic_transport.hpp"
 
 
 
@@ -29,8 +29,13 @@ double dTtt_dtau(double Ttt, double Ttx, double Tty, double Ttn, double pl, doub
 	double tau2 = tau*tau;
 	double z3 = ut/tau/sqrt(1.0 + ux*ux + uy*uy);
 
-	double pt_macro = p + pt - equilibriumKineticPressure(T);
-	double pl_macro = p + pl - equilibriumKineticPressure(T);
+	//double pt_macro = p + pt - equilibriumKineticPressure(T);
+	//double pl_macro = p + pl - equilibriumKineticPressure(T);
+
+	double mbar = z_Quasiparticle(T);
+	double pkinetic = I21_function(T,mbar);
+	double pt_macro = p + pt - pkinetic;
+	double pl_macro = p + pt - pkinetic;
 
 	double Lnn = (pl-pt)*z3*z3;
 
@@ -69,7 +74,7 @@ double dpl_dtau(double Ttt, double Ttx, double Tty, double Ttn, double pl, doubl
 	double etas = shearViscosityToEntropyDensity(T);     // specific shear viscosity
 	double zetas = bulkViscosityToEntropyDensity(T);     // specific bulk viscosity
 	double betapi = beta_pi(T);						     // eta / tau_pi
-	double betaPi = beta_Pi(T);						     // zeta / tau_Pi
+	double betaPi = beta_Pi(T);						     // zeta / tau_Pi   // should check it agrees with m/T limit
 	double mbar = z_Quasiparticle(T) * (T/lambda);       // m(T) / lambda
 
 
@@ -77,23 +82,25 @@ double dpl_dtau(double Ttt, double Ttx, double Tty, double Ttn, double pl, doubl
 	double taupiInv = betapi/s/etas;                     // shear relaxation rate
 	double tauPiInv = betaPi/s/zetas;                    // bulk relaxation rate
 
+	//double cs2 = speedOfSoundSquared(e);
+	//double b2 = (1.0/3.0 - cs2);
+	//double taupiInv = 0.2 * T / etas;
+	//double tauPiInv = 15.0 * b2 * b2 * T / zetas;
+
 
 	double pavg = (2.0*pt + pl) / 3.0;			         // average kinetic pressure
 	double dp = pl - pt;						         // pressure anisotropy
-	double peq = equilibriumKineticPressure(T);          // kinetic contribution only (no B(T))
+	//double peq = equilibriumKineticPressure(T);          // kinetic contribution only (no B(T))
+	double mbar_eq = z_Quasiparticle(T);
+	double peq = I21_function(T,mbar_eq);
 
 	double I240 = I240_function(lambda,ax,az,mbar);
 
+	// double I020 = I020_function(lambda,ax,az,mbar);
+	// double edot = dTtt_dtau(Ttt, Ttx, Tty, Ttn, pl, pt, ut, ux, uy, un, e, p, lambda, ax, az, tau);
+	// double dTde = 1.0 / derivativeEnergyDensityWithRespectToTemperature(T);
+	// double quasi_term = I020 * mdmdT_Quasiparticle(T) * dTde * edot;
 
-	// take out quasi term for now; if put back add to r.h.s: pldot += - quasi_term
-
-	//double I020 = I020(lambda,ax,az,T);
-	//double quasi_term = I020 * mdmdT_Quasiparticle(T); // quasiparticle contribution
-
-	// shoot the quasi_term is not correct, I need T_dot or e_dot
-
-	// requires m * dm/de * edot
-	// rewrite mdmdT to mdmde
 	// set edot = (e_n - e_n-1) / dtau backward difference; feed in e, ep and dtau;
 
 	// kinetic pl relaxation equation
@@ -117,24 +124,23 @@ double dpt_dtau(double Ttt, double Ttx, double Tty, double Ttn, double pl, doubl
 	double taupiInv = betapi/s/etas;
 	double tauPiInv = betaPi/s/zetas;
 
+	//double cs2 = speedOfSoundSquared(e);
+	//double b2 = (1.0/3.0 - cs2);
+	//double taupiInv = 0.2 * T / etas;
+	//double tauPiInv = 15.0 * b2 * b2 * T / zetas;
+
 	double pavg = (2.0*pt + pl) / 3.0;
 	double dp = pl - pt;
-	double peq = equilibriumKineticPressure(T);
+	//double peq = equilibriumKineticPressure(T);
+	double mbar_eq = z_Quasiparticle(T);
+	double peq = I21_function(T,mbar_eq);
 
-	double I221 = I221_function(lambda, ax, az, mbar);
+	double I221 = I221_function(lambda,ax,az,mbar);
 
-
-	// take out quasi term for now; if put back add to r.h.s: pldot += - quasi_term
-
-	//double I001 = I001(lambda,ax,az,T);
-	//double quasi_term = I001 * mdmdT_Quasiparticle(T);   // quasiparticle contribution
-
-	// shoot the quasi_term is not correct, I need T_dot or e_dot
-
-	// requires m * dm/de * edot
-	// rewrite mdmdT to mdmde
-	// set edot = (e_n - e_n-1) / dtau backward difference; feed in e, ep and dtau;
-
+	// double I001 = I001_function(lambda,ax,az,mbar);
+	// double edot = dTtt_dtau(Ttt, Ttx, Tty, Ttn, pl, pt, ut, ux, uy, un, e, p, lambda, ax, az, tau);
+	// double dTde = 1.0 / derivativeEnergyDensityWithRespectToTemperature(T);
+	// double quasi_term = I001 * mdmdT_Quasiparticle(T) * dTde * edot;
 
 	// kinetic pl relaxation equation
 	double ptdot = tauPiInv*(peq-pavg) + taupiInv*dp/3.0 + (I221-pt)/tau;

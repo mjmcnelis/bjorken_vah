@@ -36,5 +36,11 @@ double R240(double pbar, double ax, double az, double mbar);
 //I221
 double R221(double pbar, double ax, double az, double mbar);
 
+//I020
+double R020(double pbar, double ax, double az, double mbar);
+
+//I001
+double R001(double pbar, double ax, double az, double mbar);
+
 
 #endif

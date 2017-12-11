@@ -163,10 +163,38 @@ double tfunc221(double x)
 	if(x > 0.0)
 		result = (-3.0 + (3.0+x)*atan(sqrt(x))/sqrt(x)) / (x*x);
 	else if(x < 0.0 && x > -1.0)
-		result = (-3.0 - (3.0+x)*atanh(sqrt(-x))/sqrt(-x)) / (x*x);
+		result = (-3.0 + (3.0+x)*atanh(sqrt(-x))/sqrt(-x)) / (x*x); // fixed bug on 12/8
 	else if(x == 0.0)
 		result = 4.0/15.0;
 	else if(x <= -1.0)
 		throw "tfunc221 outside domain";
+	return result;
+}
+
+double tfunc020(double x)
+{
+	double result = 0.0;
+	if(x > 0.0)
+		result = 2.0 * (1.0 - atan(sqrt(x))/sqrt(x)) / x;
+	else if(x < 0.0 && x > -1.0)
+		result = 2.0 * (1.0 - atanh(sqrt(-x))/sqrt(-x)) / x;
+	else if(x == 0.0)
+		result = 2.0/3.0;
+	else if(x <= -1.0)
+		throw "tfunc020 outside domain";
+	return result;
+}
+
+double tfunc001(double x)
+{
+	double result = 0.0;
+	if(x > 0.0)
+		result = 2.0 * (-1.0/(1.0+x) + atan(sqrt(x))/sqrt(x)) / x;
+	else if(x < 0.0 && x > -1.0)
+		result = 2.0 * (-1.0/(1.0+x) + atanh(sqrt(-x))/sqrt(-x)) / x;
+	else if(x == 0.0)
+		result = 4.0/3.0;
+	else if(x <= -1.0)
+		throw "tfunc001 outside domain";
 	return result;
 }

@@ -16,7 +16,7 @@
 #define ETAS_MIN 0.08
 #define ETAS_SLOPE 0.167728     // Duke
 #define ZETA_NORM 1.25
-#define T_PEAK 0.180 * 5.067731
+#define T_PEAK (0.180 * 5.067731)
 
 
 double equilibriumPressure(double e);

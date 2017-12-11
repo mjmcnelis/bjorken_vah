@@ -26,5 +26,9 @@ double tfunc240(double x);
 
 double tfunc221(double x);
 
+double tfunc020(double x);
+
+double tfunc001(double x);
+
 
 #endif

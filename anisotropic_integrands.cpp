@@ -35,6 +35,20 @@ double I221_integrand(double pbar, double ax, double az, double mbar)
 }
 
 
+double I020_integrand(double pbar, double ax, double az, double mbar)
+{
+	// gauss laguerre (a = 2)
+	return pbar * R020(pbar,ax,az,mbar) * exp(pbar-sqrt(pbar*pbar + mbar*mbar));
+}
+
+
+double I001_integrand(double pbar, double ax, double az, double mbar)
+{
+	// gauss laguerre (a = 2)
+	return pbar * R001(pbar,ax,az,mbar) * exp(pbar-sqrt(pbar*pbar + mbar*mbar));
+}
+
+
 double Ea_integrand(double pbar, double ax, double az, double mbar)
 {
 	// gauss laguerre (a = 2)
@@ -80,22 +94,22 @@ double I2201_integrand(double pbar, double ax, double az, double mbar)
 }
 
 
-double I401m1_integrand(double pbar, double ax, double az, double mbar)
-{
-	// gauss laguerre (a = 3)
-	double pbar2 = pbar * pbar;
-	double Eabar = sqrt(pbar2 + mbar*mbar);
-	return (pbar2 / Eabar) * R401(pbar,ax,az,mbar) * exp(pbar - Eabar);
-}
+// double I401m1_integrand(double pbar, double ax, double az, double mbar)
+// {
+// 	// gauss laguerre (a = 3)
+// 	double pbar2 = pbar * pbar;
+// 	double Eabar = sqrt(pbar2 + mbar*mbar);
+// 	return (pbar2 / Eabar) * R401(pbar,ax,az,mbar) * exp(pbar - Eabar);
+// }
 
 
-double I420m1_integrand(double pbar, double ax, double az, double mbar)
-{
-	// gauss laguerre (a = 3)
-	double pbar2 = pbar * pbar;
-	double Eabar = sqrt(pbar2 + mbar*mbar);
-	return (pbar2 / Eabar) * R420(pbar,ax,az,mbar) * exp(pbar - Eabar);
-}
+// double I420m1_integrand(double pbar, double ax, double az, double mbar)
+// {
+// 	// gauss laguerre (a = 3)
+// 	double pbar2 = pbar * pbar;
+// 	double Eabar = sqrt(pbar2 + mbar*mbar);
+// 	return (pbar2 / Eabar) * R420(pbar,ax,az,mbar) * exp(pbar - Eabar);
+// }
 
 
 double I402m1_integrand(double pbar, double ax, double az, double mbar)
@@ -125,6 +139,24 @@ double I440m1_integrand(double pbar, double ax, double az, double mbar)
 }
 
 
+double I21_integrand(double pbar, double mbar)
+{
+	// gauss laguerre (a = 2) boltzmann
+	double pbar2 = pbar * pbar;
+	double Ebar = sqrt(pbar2 + mbar*mbar);
+
+	return (pbar*pbar)/(Ebar) * exp(pbar-Ebar);
+}
+
+
+double I20_integrand(double pbar, double mbar)
+{
+	// gauss laguerre (a = 2) boltzmann
+	double pbar2 = pbar * pbar;
+	double Ebar = sqrt(pbar2 + mbar*mbar);
+
+	return Ebar * exp(pbar-Ebar);
+}
 
 
 

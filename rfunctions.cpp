@@ -96,3 +96,19 @@ double R221(double pbar, double ax, double az, double mbar)
 	double x = (ax*ax - az*az) / (az*az + mop2);
 	return tfunc221(x) / pow(az*az + mop2, 1.5);
 }
+
+//I020
+double R020(double pbar, double ax, double az, double mbar)
+{
+	double mop2 = (mbar*mbar) / (pbar*pbar);
+	double x = (ax*ax - az*az) / (az*az + mop2);
+	return tfunc020(x) / pow(az*az + mop2, 1.5);
+}
+
+//I001
+double R001(double pbar, double ax, double az, double mbar)
+{
+	double mop2 = (mbar*mbar) / (pbar*pbar);
+	double x = (ax*ax - az*az) / (az*az + mop2);
+	return tfunc001(x) / pow(az*az + mop2, 1.5);
+}
