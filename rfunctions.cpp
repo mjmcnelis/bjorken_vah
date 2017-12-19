@@ -112,3 +112,11 @@ double R001(double pbar, double ax, double az, double mbar)
 	double x = (ax*ax - az*az) / (az*az + mop2);
 	return tfunc001(x) / pow(az*az + mop2, 1.5);
 }
+
+//I000
+double R000(double pbar, double ax, double az, double mbar)
+{
+	double mop2 = (mbar*mbar) / (pbar*pbar);
+	double x = (ax*ax - az*az) / (az*az + mop2);
+	return tfunc000(x) / sqrt(az*az + mop2);
+}

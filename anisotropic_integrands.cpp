@@ -48,6 +48,12 @@ double I001_integrand(double pbar, double ax, double az, double mbar)
 	return pbar * R001(pbar,ax,az,mbar) * exp(pbar-sqrt(pbar*pbar + mbar*mbar));
 }
 
+double I000_integrand(double pbar, double ax, double az, double mbar)
+{
+	// gauss laguerre (a = 2)
+	return pbar * R000(pbar,ax,az,mbar) * exp(pbar-sqrt(pbar*pbar + mbar*mbar));
+}
+
 
 double Ea_integrand(double pbar, double ax, double az, double mbar)
 {
@@ -156,6 +162,16 @@ double I20_integrand(double pbar, double mbar)
 	double Ebar = sqrt(pbar2 + mbar*mbar);
 
 	return Ebar * exp(pbar-Ebar);
+}
+
+
+double I00_integrand(double pbar, double mbar)
+{
+	// gauss laguerre (a = 0) boltzmann
+	double pbar2 = pbar * pbar;
+	double Ebar = sqrt(pbar2 + mbar*mbar);
+
+	return pbar*pbar/Ebar * exp(pbar-Ebar);
 }
 
 

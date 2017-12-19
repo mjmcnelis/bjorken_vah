@@ -20,7 +20,7 @@ using namespace std;
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 
-void get_inferred_variables(double Ttt, double Ttx, double Tty, double Ttn, double pl, double pt, double *ut, double *ux, double *uy, double *un, double *e, double *p, double tau)
+void get_inferred_variables(double Ttt, double Ttx, double Tty, double Ttn, double pl, double pt, double B, double *ut, double *ux, double *uy, double *un, double *e, double *p, double t)
 {
 	// initial guess for energy density (previous time step value)
 	double estar = *e;
@@ -29,7 +29,7 @@ void get_inferred_variables(double Ttt, double Ttx, double Tty, double Ttn, doub
 
 	double M0 = Ttt,	M1 = Ttx,	M2 = Tty,	M3 = Ttn;
 
-	double Mvec2 = M1*M1 + M2*M2 + tau*tau*M3*M3;
+	double Mvec2 = M1*M1 + M2*M2 + t*t*M3*M3;
 
 	double de, f, fprime;
 
@@ -77,7 +77,7 @@ void get_inferred_variables(double Ttt, double Ttx, double Tty, double Ttn, doub
 
 	*uy = 0.0;
 
-	*un = 0.0; 
+	*un = 0.0;
 
 
 	// *ut = sqrt((Ttt + pt_macro)/(*e + pt_macro));

@@ -198,3 +198,17 @@ double tfunc001(double x)
 		throw "tfunc001 outside domain";
 	return result;
 }
+
+double tfunc000(double x)
+{
+	double result = 0.0;
+	if(x > 0.0)
+		result = 2.0 * atan(sqrt(x))/sqrt(x);
+	else if(x < 0.0 && x > -1.0)
+		result = 2.0 * atanh(sqrt(-x))/sqrt(-x);
+	else if(x == 0.0)
+		result = 2.0;
+	else if(x <= -1.0)
+		throw "tfunc000 outside domain";
+	return result;
+}

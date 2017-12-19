@@ -6,17 +6,19 @@
 #define EVOLUTION_H
 
 
-double dTtt_dtau(double Ttt, double Ttx, double Tty, double Ttn, double pl, double pt, double ut, double ux, double uy, double un, double e, double p, double lambda, double ax, double az, double tau);
+double dTtt_dt(double Ttt, double Ttx, double Tty, double Ttn, double pl, double pt, double B, double ut, double ux, double uy, double un, double e, double p, double lambda, double ax, double az, double t);
 
-double dTtx_dtau(double Ttt, double Ttx, double Tty, double Ttn, double pl, double pt, double ut, double ux, double uy, double un, double e, double p, double lambda, double ax, double az, double tau);
+double dTtx_dt(double Ttt, double Ttx, double Tty, double Ttn, double pl, double pt, double B, double ut, double ux, double uy, double un, double e, double p, double lambda, double ax, double az, double t);
 
-double dTty_dtau(double Ttt, double Ttx, double Tty, double Ttn, double pl, double pt, double ut, double ux, double uy, double un, double e, double p, double lambda, double ax, double az, double tau);
+double dTty_dt(double Ttt, double Ttx, double Tty, double Ttn, double pl, double pt, double B, double ut, double ux, double uy, double un, double e, double p, double lambda, double ax, double az, double t);
 
-double dTtn_dtau(double Ttt, double Ttx, double Tty, double Ttn, double pl, double pt, double ut, double ux, double uy, double un, double e, double p, double lambda, double ax, double az, double tau);
+double dTtn_dt(double Ttt, double Ttx, double Tty, double Ttn, double pl, double pt, double B, double ut, double ux, double uy, double un, double e, double p, double lambda, double ax, double az, double t);
 
-double dpl_dtau(double Ttt, double Ttx, double Tty, double Ttn, double pl, double pt, double ut, double ux, double uy, double un, double e, double p, double lambda, double ax, double az, double tau);
+double dpl_dt(double Ttt, double Ttx, double Tty, double Ttn, double pl, double pt, double B, double ut, double ux, double uy, double un, double e, double p, double lambda, double ax, double az, double t);
 
-double dpt_dtau(double Ttt, double Ttx, double Tty, double Ttn, double pl, double pt, double ut, double ux, double uy, double un, double e, double p, double lambda, double ax, double az, double tau);
+double dpt_dt(double Ttt, double Ttx, double Tty, double Ttn, double pl, double pt, double B, double ut, double ux, double uy, double un, double e, double p, double lambda, double ax, double az, double t);
+
+double dB_dt(double Ttt, double Ttx, double Tty, double Ttn, double pl, double pt, double B, double ut, double ux, double uy, double un, double e, double p, double lambda, double ax, double az, double t);
 
 
 #endif

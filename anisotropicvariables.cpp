@@ -195,7 +195,7 @@ void free_2D(double ** M, int n)
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 
-void get_anisotropic_variables(double e, double pl, double pt, double *lambda, double *ax, double *az)
+void get_anisotropic_variables(double e, double pl, double pt, double B, double *lambda, double *ax, double *az)
 {
 	// this is not designed for conformal mode; it will probably crash
 	// could do an ifdef statement
@@ -205,14 +205,24 @@ void get_anisotropic_variables(double e, double pl, double pt, double *lambda, d
 	// (e,pt,pl) should already be updated (not previous values) before running this
 	// order: update conserved variables, update inferred variables, update anisotropic variables
 
-	const double T = effectiveTemperature(e);					   // temperature
-	//const double ekinetic = equilibriumKineticEnergyDensity(T);    // quasiparticle kinetic energy density
+	double T = effectiveTemperature(e);					     // temperature
+	//double ekinetic = equilibriumKineticEnergyDensity(T);    // quasiparticle kinetic energy density
 	double mbar_eq = z_Quasiparticle(T);
-	const double ekinetic = I20_function(T,mbar_eq);
+	double ekinetic = I20_function(T,mbar_eq);
 
 	// macropscopic input variables I need to invert
 	// are the fa kinetic energy and pressures
-	const double Ea = ekinetic,   PTa = pt,	  PLa = pl;
+
+	// added non-equilibrium mean field dB
+
+	//double Beq = equilibriumBquasi(T);
+	//double dB = B - equilibriumBquasi(T);
+
+	//cout << dB << endl;
+
+	double Ea = ekinetic;
+	double PTa = pt;
+	double PLa = pl;
 
 	const double g = 51.4103536012791;                       // degeneracy factor g (nf = 3 flavors)
 
@@ -285,6 +295,9 @@ void get_anisotropic_variables(double e, double pl, double pt, double *lambda, d
 
 	// Find anisotropic variables using 3D Newton Method (change to Broydyn eventually...)
 	do{
+
+		cout << i << ", ";
+
 		// Evaluate mass parameter
 		mbari = thermal_mass / lambdai;
 
@@ -405,10 +418,19 @@ void get_anisotropic_variables(double e, double pl, double pt, double *lambda, d
 
 		i++;
 
-	} while((dXnorm2 > tolX) && (i < Nmax));
 
+	}while((dXnorm2 > tolX) && (i < Nmax));
 
 	//cout << i << endl;
+
+	if(i == Nmax)
+	{
+		cout << "Couldn't find anisotropic variables" << endl;
+	}
+	else{
+		cout << "Finished anisotropic variables in " << i << " steps" << endl;
+	}
+
 
 
 	// final answer

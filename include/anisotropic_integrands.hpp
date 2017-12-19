@@ -11,7 +11,7 @@ double I221_integrand(double pbar, double ax, double az, double mbar);
 
 double I020_integrand(double pbar, double ax, double az, double mbar);
 double I001_integrand(double pbar, double ax, double az, double mbar);
-
+double I000_integrand(double pbar, double ax, double az, double mbar);
 
 double Ea_integrand(double pbar, double ax, double az, double mbar);
 double I2001_integrand(double pbar, double ax, double az, double mbar);
@@ -31,7 +31,7 @@ double I440m1_integrand(double pbar, double ax, double az, double mbar);
 
 double I21_integrand(double pbar, double mbar);
 double I20_integrand(double pbar, double mbar);
-
+double I00_integrand(double pbar, double mbar);
 
 
 #endif

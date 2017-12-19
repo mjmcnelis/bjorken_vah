@@ -30,5 +30,7 @@ double tfunc020(double x);
 
 double tfunc001(double x);
 
+double tfunc000(double x);
+
 
 #endif

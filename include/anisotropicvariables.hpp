@@ -6,7 +6,7 @@
 #define ANISOTROPICVARIABLES_H
 
 
-void get_anisotropic_variables(double e, double pl, double pt, double *lambda, double *ax, double *az);
+void get_anisotropic_variables(double e, double pl, double pt, double B, double *lambda, double *ax, double *az);
 
 
 #endif

@@ -12,11 +12,11 @@
 //define EOS_FACTOR 13.8997   // Nc=3, Nf=2.5
 
 //#define CONSTANT_VISCOSITY
-#define CONSTANT_ETAS 0.095     // Brookhaven
+#define CONSTANT_ETAS 0.08     // Brookhaven
 #define ETAS_MIN 0.08
 #define ETAS_SLOPE 0.167728     // Duke
 #define ZETA_NORM 1.25
-#define T_PEAK (0.180 * 5.067731)
+#define T_PEAK (0.18 * 5.067731)
 
 
 double equilibriumPressure(double e);
@@ -39,12 +39,14 @@ double zdmdT(double T);
 // quasiparticle thermal functions
 double z_Quasiparticle(double T);
 double mdmdT_Quasiparticle(double T);
+double mdmde_Quasiparticle(double e);
 double equilibriumKineticPressure(double T);       // w/o B(T)
 double equilibriumKineticEnergyDensity(double T);  // w/o B(T)
+double equilibriumBquasi(double T);    			   // B(T)
 
 // quasiparticle beta function
-double beta_pi(double T);
-double beta_Pi(double T);
+double beta_shear(double T);
+double beta_bulk(double T);
 
 
 #endif
