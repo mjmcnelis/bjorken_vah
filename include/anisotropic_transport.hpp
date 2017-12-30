@@ -5,6 +5,9 @@
 
 #define ANISOTROPIC_TRANSPORT_H
 
+double PLa_function(double lambda, double ax, double az, double mbar);
+double PTa_function(double lambda, double ax, double az, double mbar);
+double Ea_function(double lambda, double ax, double az, double mbar);
 
 double I240_function(double lambda, double ax, double az, double mbar);
 double I221_function(double lambda, double ax, double az, double mbar);

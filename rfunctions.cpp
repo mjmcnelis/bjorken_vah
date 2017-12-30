@@ -1,6 +1,8 @@
 
 #include <stdlib.h>
 #include <math.h>
+#include <iostream>
+using namespace std;
 #include "rfunctions.hpp"
 #include "hypergeometric.hpp"
 

@@ -100,22 +100,22 @@ double I2201_integrand(double pbar, double ax, double az, double mbar)
 }
 
 
-// double I401m1_integrand(double pbar, double ax, double az, double mbar)
-// {
-// 	// gauss laguerre (a = 3)
-// 	double pbar2 = pbar * pbar;
-// 	double Eabar = sqrt(pbar2 + mbar*mbar);
-// 	return (pbar2 / Eabar) * R401(pbar,ax,az,mbar) * exp(pbar - Eabar);
-// }
+double I401m1_integrand(double pbar, double ax, double az, double mbar)
+{
+	// gauss laguerre (a = 3)
+	double pbar2 = pbar * pbar;
+	double Eabar = sqrt(pbar2 + mbar*mbar);
+	return (pbar2 / Eabar) * R401(pbar,ax,az,mbar) * exp(pbar - Eabar);
+}
 
 
-// double I420m1_integrand(double pbar, double ax, double az, double mbar)
-// {
-// 	// gauss laguerre (a = 3)
-// 	double pbar2 = pbar * pbar;
-// 	double Eabar = sqrt(pbar2 + mbar*mbar);
-// 	return (pbar2 / Eabar) * R420(pbar,ax,az,mbar) * exp(pbar - Eabar);
-// }
+double I420m1_integrand(double pbar, double ax, double az, double mbar)
+{
+	// gauss laguerre (a = 3)
+	double pbar2 = pbar * pbar;
+	double Eabar = sqrt(pbar2 + mbar*mbar);
+	return (pbar2 / Eabar) * R420(pbar,ax,az,mbar) * exp(pbar - Eabar);
+}
 
 
 double I402m1_integrand(double pbar, double ax, double az, double mbar)

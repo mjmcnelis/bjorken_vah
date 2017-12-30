@@ -170,8 +170,8 @@ double dB_dt(double Ttt, double Ttx, double Tty, double Ttn, double pl, double p
 	double mbar_eq = z_Quasiparticle(T);
 	double peq = I21_function(T,mbar_eq);
 
-	//double I000 = I000_function(lambda,ax,az,mbar);
-	//double I00_eq = I00_function(T,mbar_eq);
+	double I000 = I000_function(lambda,ax,az,mbar);
+	double I00_eq = I00_function(T,mbar_eq);
 
 	double edot = dTtt_dt(Ttt, Ttx, Tty, Ttn, pl, pt, B, ut, ux, uy, un, e, p, lambda, ax, az, t);
 

@@ -22,8 +22,8 @@ double I2011_integrand(double pbar, double ax, double az, double mbar);
 double PLa_integrand(double pbar, double ax, double az, double mbar);
 double I2201_integrand(double pbar, double ax, double az, double mbar);
 
-// double I401m1_integrand(double pbar, double ax, double az, double mbar);
-// double I420m1_integrand(double pbar, double ax, double az, double mbar);
+double I401m1_integrand(double pbar, double ax, double az, double mbar);
+double I420m1_integrand(double pbar, double ax, double az, double mbar);
 
 double I402m1_integrand(double pbar, double ax, double az, double mbar);
 double I421m1_integrand(double pbar, double ax, double az, double mbar);

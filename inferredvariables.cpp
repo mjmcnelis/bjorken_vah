@@ -67,9 +67,9 @@ void get_inferred_variables(double Ttt, double Ttx, double Tty, double Ttn, doub
 	} while((de/estar > tol) && (i < Nmax));
 
 
-	*e = estar;
+	*e = Ttt;
 
-	*p = pstar;
+	*p = equilibriumPressure(Ttt);
 
 	*ut = 1.0;
 

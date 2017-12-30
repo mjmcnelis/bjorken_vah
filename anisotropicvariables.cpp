@@ -2,13 +2,14 @@
 #include <stdlib.h>
 #include <math.h>
 #include <iostream>
+#include <exception>
 using namespace std;
 #include "anisotropicvariables.hpp"
 #include "qcd.hpp"
 #include "anisotropic_integrands.hpp"
 #include "gauss_integration.hpp"
 #include "anisotropic_transport.hpp"
-#define EPS_MIN (1.0e-16)
+#define EPS_MIN 1.0e-16
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -188,41 +189,52 @@ void free_2D(double ** M, int n)
 //                       ANISOTROPIC VARIABLES                      ::
 //                                                                  ::
 //     Compute the anisotropic variables (lambda,ax,az) from        ::
-//	   the quantities (e <-> e_kinetic,pl,pt)       		        ::
+//	   the quantities (e,B,pl,pt)       		                    ::
 //                                                                  ::
 //                     get_anisotropic_variables                    ::
 //																	::
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 
+
+
+
+
 void get_anisotropic_variables(double e, double pl, double pt, double B, double *lambda, double *ax, double *az)
 {
-	// this is not designed for conformal mode; it will probably crash
-	// could do an ifdef statement
+	// not designed for conformal mode, it will crash
 
-
-
-	// (e,pt,pl) should already be updated (not previous values) before running this
+	// (e,B,pt,pl) should already be updated before running this
 	// order: update conserved variables, update inferred variables, update anisotropic variables
 
-	double T = effectiveTemperature(e);					     // temperature
-	//double ekinetic = equilibriumKineticEnergyDensity(T);    // quasiparticle kinetic energy density
-	double mbar_eq = z_Quasiparticle(T);
-	double ekinetic = I20_function(T,mbar_eq);
+	const double T = effectiveTemperature(e);				   // temperature
 
-	// macropscopic input variables I need to invert
-	// are the fa kinetic energy and pressures
 
-	// added non-equilibrium mean field dB
+	//const double Ekinetic = equilibriumKineticEnergyDensity(T);    // quasiparticle kinetic energy density
 
-	//double Beq = equilibriumBquasi(T);
-	//double dB = B - equilibriumBquasi(T);
+	//const double mbareq = z_Quasiparticle(T);
+	//const double Ekinetic = I20_function(T,mbareq);
+	//const double dB = B - equilibriumBquasi(T);
 
-	//cout << dB << endl;
+	//const double Ea = Ekinetic - dB;
+	const double Ea = e - B;
+	const double PTa = pt;
+	const double PLa = pl;
 
-	double Ea = ekinetic;
-	double PTa = pt;
-	double PLa = pl;
+	//throw "Boom ";
+
+	if(Ea < 0.0)
+	{
+		throw "Ea is out of bounds!\n";
+	}
+	if(PTa < 0.0)
+	{
+		throw "PTa is out of bounds!\n";
+	}
+	if(PLa < 0.0)
+	{
+		throw "PLa is out of bounds!\n";
+	}
 
 	const double g = 51.4103536012791;                       // degeneracy factor g (nf = 3 flavors)
 
@@ -236,23 +248,6 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 
 	double pbar_weightJ[pbar_pts] = {0.00660146448073508,0.0813584931042281,0.347537436309438,0.809963198105261,1.22739584119905,1.32050782861975,1.06049919505728,0.655616488144915,0.318173017008472,0.122743109012855,0.0379333897858022,0.00943187028689987,0.00188978713293874,0.000304914974586437,3.95130877631855e-05,4.09377958251348e-06,3.36921618654073e-07,2.1841295448875e-08,1.10337736506627e-09,4.28638379146177e-11,1.25966453444067e-12,2.74423030367617e-14,4.32175197361363e-16,4.76686817705967e-18,3.53643350342934e-20,1.67355018349782e-22,4.70254099995936e-25,7.09116556196869e-28,4.93082516196282e-31,1.23284946609868e-34,6.91389702736573e-39,2.63586492716958e-44};
 
-	// const int pbar_pts = 16;
-
-	// //a = 2 Gauss Laguerre roots/weights (for F)
-	// double pbar_rootF[pbar_pts] = {0.377613508344741,1.01749195760257,1.94775802042424,3.17692724488987,4.7162400697918,6.58058826577491,8.78946527064707,11.3683230828333,14.350626727437,17.7810957248416,21.7210847965713,26.2581386751111,31.5245960042758,37.7389210025289,45.3185461100898,55.3325835388358};
-	// double pbar_weightF[pbar_pts] = {0.0486064094670787,0.29334739019044,0.583219363383551,0.581874148596173,0.33818053747379,0.12210596394498,0.0281146258006637,0.00414314919248226,0.000385648533767438,2.20158005631091e-05,7.34236243815652e-07,1.32646044204804e-08,1.15266648290843e-10,3.94706915124609e-13,3.63797825636053e-16,3.45457612313612e-20};
-
-	// //a = 3 gauss laguerre roots/weights (for J)
-	// double pbar_rootJ[pbar_pts] = {0.567443458991574,1.33290773275989,2.38148248007006,3.72382664209343,5.37212395216187,7.34193662826135,9.65333213726123,12.3323014070182,15.4128500654077,18.9402755758603,22.9765957156019,27.6101814474261,32.9745092032585,39.2898232533641,46.9768962767103,57.1135140237535};
-	// double pbar_weightJ[pbar_pts] = {0.0650981121009449,0.565273224236402,1.48989313857907,1.86124704489653,1.30047554848272,0.547819646856915,0.143843043208106,0.0237498472421623,0.00244244469350611,0.000152340599558851,5.50126530501356e-06,1.06842629643597e-07,9.92524335897222e-10,3.61863342780077e-12,3.54373278073215e-15,3.58180355287779e-19};
-
-
-
-
-	//:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-
-
 
 	double lambdai = *lambda;			                     // initial guess for anisotropic variables
 	double axi = *ax;										 // are previous time step values
@@ -261,16 +256,17 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 
 	const int n = 3; 										 // dimension space
 	double X[n] = {lambdai, axi, azi};						 // initial guess vector
+	double Xold[n] = {lambdai,axi,azi};						 // original guess
   	double F[n];  											 // F vector (root equation: F[X] = 0)
 	// J = Jacobian of F
 	double **J = (double **) malloc(n * sizeof(double *));
-	for(int i = 0; i < n; i++) J[i] = (double *) malloc(n* sizeof(double));
+	for(int k = 0; k < n; k++) J[k] = (double *) malloc(n* sizeof(double));
  	int pvector[n];									  		 // permutation vector
 
 
  	// mbar = m(T) / lambda
-	const double thermal_mass = z_Quasiparticle(T) * T;	     // m(T) fixed wpt lambda
-	double mbari;                   						 // mbar = m(T) / lambda
+	double thermal_mass = z_Quasiparticle(T) * T;	     // m(T) fixed wpt lambda
+	double mbari;                   				     // mbar = m(T) / lambda
 
 
 	// prefactors and factors of F/J elements: to be evaluated at ith iteration of X
@@ -279,29 +275,41 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
   	double factorEai, factorPTai, factorPLai;
   	double factorI2001, factorI2011, factorI2201, factorI402m1, factorI421m1, factorI440m1;
 
+  	double factorI401m1, factorI420m1;
+
 
 	// anisotropic functions evaluated at ith iteration of X
 	double Eai, PTai, PLai;
 	double I2001, I2011, I2201, I402m1, I421m1, I440m1;
 
+	double I401m1, I420m1;
+
 
 
 	int i = 0;				  // starting ith iteration
-	int Nmax = 100;			  // max number of iterations
+	int Nmax = 1000;	      // max number of iterations
 	double dXnorm2;           // L2-norm of dX iteration
 	double Fnorm2;		      // L2-norm of F
-	double tolX = 1.0e-7;     // tolerance for X
-	double tolF = 1.0e-10;    // what's the scale I should use?
+	double toldX = 1.0e-8;    // tolerance for dX
+	double tolF = 1.0e-11;    // tolerance for F
 
-	// Find anisotropic variables using 3D Newton Method (change to Broydyn eventually...)
+	toldX = 1.0e-7;
+	tolF = 1.0e-10;
+
+	double l = 0.1;
+
+	int m = 0;
+	// I should spend Christmas break working on the Broydyn method
+
+	// Find anisotropic variables using 3D Newton Method
 	do{
 
-		cout << i << ", ";
+		//cout << i << ", ";
 
 		// Evaluate mass parameter
 		mbari = thermal_mass / lambdai;
 
-		// Evaluate factors and prefactors of F/J
+		// Evaluate factors and prefactors
 		lambdai2 = lambdai * lambdai;
 	    lambdai3 = lambdai2 * lambdai;
 	    axi2 = axi * axi;
@@ -320,8 +328,8 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 	    factorI2011 = commonfactori * axi2 * lambdai3 / 2.0;
 	    factorI2201 = commonfactori * azi2 * lambdai3;
 
-	    //factorI401m1 = factorI2011;
-	    //factorI420m1 = factorI2201;
+	    factorI401m1 = factorI2011;
+	    factorI420m1 = factorI2201;
 
 	    factorI402m1 = commonfactori * axi2 * axi2 * lambdai3 / 8.0;
 	    factorI421m1 = commonfactori * axi2 * azi2 * lambdai3 / 2.0;
@@ -352,15 +360,14 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 		// Calculate L2-norm of F
     	Fnorm2 = sqrt(fabs(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]));
 
-
     	// Evaluate anisotropic functions for J (more 1D Gauss-Laguerre integrals)
 	    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 	    I2001 = factorI2001 * Gauss_Aniso_1D(I2001_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, axi, azi, mbari);
 	    I2011 = factorI2011 * Gauss_Aniso_1D(I2011_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, axi, azi, mbari);
 	    I2201 = factorI2201 * Gauss_Aniso_1D(I2201_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, axi, azi, mbari);
 
-	    //I401m1 = factorI401m1 * Gauss_Aniso_1D(I401m1_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, axi, azi, mbari);
-	    //I420m1 = factorI420m1 * Gauss_Aniso_1D(I420m1_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, axi, azi, mbari);
+	    I401m1 = factorI401m1 * Gauss_Aniso_1D(I401m1_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, axi, azi, mbari);
+	    I420m1 = factorI420m1 * Gauss_Aniso_1D(I420m1_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, axi, azi, mbari);
 
 	    I402m1 = factorI402m1 * Gauss_Aniso_1D(I402m1_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, axi, azi, mbari);
 	    I421m1 = factorI421m1 * Gauss_Aniso_1D(I421m1_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, axi, azi, mbari);
@@ -379,10 +386,10 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 
 	    // row 1
 	    J[0][0] = I2001/lambdai2;
-	    //J[0][1] = 2.0 * I401m1 / lambdaiaxi3;
-	    J[0][1] = 2.0*(Eai+PTai)/axi;
-	   // J[0][2] = I420m1 / lambdaiazi3;
-	    J[0][2] = (Eai+PLai)/azi;
+	    J[0][1] = 2.0 * I401m1 / lambdaiaxi3;
+	    //J[0][1] = 2.0*(Eai+PTai)/axi;
+	    J[0][2] = I420m1 / lambdaiazi3;
+	    //J[0][2] = (Eai+PLai)/azi;
 	    // row 2
 	    J[1][0] = I2011/lambdai2;
 	    J[1][1] = 4.0 * I402m1 / lambdaiaxi3;
@@ -403,13 +410,86 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 	    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 
-	    // update X_i
-	    for(int k = 0; k < n; k++) X[k] += F[k];
+	    // here F is the full Newton step dX
 
+	   //  l = 1.0;
+
+	   //  // check whether or not F (or f?) decreased:
+	   //  // it'll go something like
+	   //  if(f > fold)
+	   //  {
+	   //  	// if 2nd:Nmax Newton fails use cubic g(l) solution
+	   //  	if(i > 0)
+	   //  	{
+	   //  		// work out all details of the cubic solution
+
+	   //  		g0 = F0;
+	   //  		g1 = F1;     // these guys need some work...
+	   //  		g2 = F2;
+	   //  		gprime0 = gradf * dX;
+
+	   //  		a = ((g1-gprime0*l1-g0)/(l1*l1) - (g2-gprime0*l2-g0)/(l2*l2)) / (l1-l2);
+				// b = (-l2*(g1-gprime0*l1-g0)/(l1*l1) + l1*(g2-gprime0*l2-g0)/(l2*l2)) / (l1-l2);
+
+				// // update current, previous and 2nd previous l's
+				// l2 = l1;
+				// l1 = l;
+				// l = (-b + sqrt(b*b - 3.0*a*gprime0)) / (3.0*a);
+
+				// if(l < 0.1*l2) // l1 used in routine stored in l2
+				// 	l = 0.1 * l2;
+				// if(l > 0.5*l2)
+				// 	l = 0.5*l2;
+	   //  	}
+	   //  	// if 1st Newton fails use quadratic g(l) solution
+	   //  	else if(i == 0)
+	   //  	{
+	   //  		// work out details of the quadratic solution
+	   //  		g0 = Fold;
+	   //  		g1 = Fnew;
+	   //  		gprime0 = gradf * dX; // these guys need some work
+
+	   //  		// how to update l1, l2?...
+
+
+	   //  		l = - gprime0 / (2.0*(g1 - g0 - gprime0));
+
+	   //  		if(l < 0.1)
+	   //  			l = 0.1;
+	   //  		if(l > 0.5)
+	   //  			l = 0.5;
+	   //  	}
+
+
+	   //  }
+	   //  else if (f < fold)
+	   //  {
+	   //  	 l = 1.0;   // use full Newton step
+	   //  }
+	   //  else if (abs(f-fold) < tolF)
+	   //  {
+	   //  	if(abs(F) > tolF)
+	   //  	{
+	   //  		throw "Hit a local min f\n";
+	   //  	}
+	   //  }
+
+
+
+
+
+
+
+
+
+
+
+
+	    // update X_i
+	    for(int k = 0; k < n; k++) X[k] += (l * F[k]);
 
 	    // calculate L2-norm of dX iteration
 	    dXnorm2 = sqrt(fabs(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]));
-
 
 		// update individual variables
 		lambdai = X[0];
@@ -418,27 +498,50 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 
 		i++;
 
+		if(lambdai < 0.0)
+		{
+			cout << "At iteration " << i << ": ";
+    		throw "lambda is negative\n";
+		}
+    	if(axi < 0.0)
+    	{
+    		cout << "At iteration " << i << ": ";
+    		throw "ax is negative\n";
+    	}
+    	if(azi < 0.0)
+    	{
+    		cout << "At iteration " << i << ": ";
+    		throw "az is negative\n";
+    	}
 
-	}while((dXnorm2 > tolX) && (i < Nmax));
+    	// if(i == Nmax -1)
+    	// {
+    	// 	cout << ""
+    	// 	lambdai = Xold[0];
+    	// 	axi = Xold[1];
+    	// 	i = 0;
+    	// }
 
-	//cout << i << endl;
 
-	if(i == Nmax)
+	}while((dXnorm2 > toldX) && (Fnorm2 > tolF) && (i < Nmax));
+
+
+
+	if(i < Nmax)
 	{
-		cout << "Couldn't find anisotropic variables" << endl;
+		// final answer
+		*lambda = lambdai;
+		*ax = axi;
+		*az = azi;
+		cout << i << " ";
 	}
-	else{
-		cout << "Finished anisotropic variables in " << i << " steps" << endl;
+	else
+	{
+		throw "Couldn't find anisotropic variables...\n";
 	}
-
-
-
-	// final answer
-	*lambda = lambdai;
-	*ax = axi;
-	*az = azi;
 
 	// free allocated memory
+
 	free_2D(J,n);
 }
 
