@@ -157,18 +157,29 @@ int main()
 	//double PL = 0.014925 * e / 3.0;
 	//double PT = 1.4925 * e / 3.0;
 
-	double PLPTratio = 0.172;
+	double PLPTratio = 0.1;
 
 	double PT = (3.0/(2.0+PLPTratio)) * e / 3.0;
 	double PL = (3.0 - 6.0/(2.0+PLPTratio)) * e / 3.0;
 
+	
+
 	double dB2nd = -3.0*taubulk*mdmdT_Quasiparticle(T)/pow(z_Quasiparticle(T),2)*speedOfSoundSquared(e)*(2.0*PT/3.0+PL/3.0-p)/(t0*T);
 	//double B = 0.1141*(Beq + dB2nd);
+	cout << dB2nd << endl;
+
+	double m0 = T * z_Quasiparticle(T); 
+
+	// double a = 3.0*taubulk*mdmde_Quasiparticle(e)*(e+PL)/(t0*m0*m0);
+	// cout << 4.0/3.0*a << endl;
+
+	dB2nd = -3.0*taubulk*mdmde_Quasiparticle(e)*(e+PL)*(2.0*PT/3.0+PL/3.0-p)/(t0*m0*m0) /  
+			(1.0 + 4.0*taubulk*mdmde_Quasiparticle(e)*(e+PL)/(t0*m0*m0));
 
 	double B = 1.0*(Beq + dB2nd);
 
 	//cout << (2.0*PT/3.0+PL/3.0-p) << endl;
-	cout << B - Beq << endl;
+	//cout << B - Beq << endl;
 	cout << dB2nd << endl;
 	double pl = PL + B;
 	double pt = PT + B;
@@ -199,7 +210,7 @@ int main()
 	cout << "ax = " << ax0 << ";" << endl;
 	cout << "az = " << az0 << ";" << endl;
 
-	//exit(-1);
+	exit(-1);
 	//cout << p << endl;
 	//cout << pkinetic - Beq << endl;
 
