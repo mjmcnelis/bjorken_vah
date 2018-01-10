@@ -87,7 +87,7 @@ int main()
 
 	//double pkinetic = equilibriumKineticPressure(T0);
 
-	double pkinetic = I21_function(T,mbar_eq);
+	//double pkinetic = I21_function(T,mbar_eq);
 	double Beq = equilibriumBquasi(T);
 
 
@@ -154,20 +154,30 @@ int main()
 	// or scale the dB only? the regulation should depend on the degree of pressure anisotropy
 
 // Glasma initial conditions
-	double PL = 0.00149925 * p;
-	double PT = 1.49925 * p;
+	//double PL = 0.014925 * e / 3.0;
+	//double PT = 1.4925 * e / 3.0;
 
-	// double PL = 1.0 * p;
-	// double PT = 1.0 * p;
+	double PLPTratio = 0.172;
+
+	double PT = (3.0/(2.0+PLPTratio)) * e / 3.0;
+	double PL = (3.0 - 6.0/(2.0+PLPTratio)) * e / 3.0;
 
 	double dB2nd = -3.0*taubulk*mdmdT_Quasiparticle(T)/pow(z_Quasiparticle(T),2)*speedOfSoundSquared(e)*(2.0*PT/3.0+PL/3.0-p)/(t0*T);
-	double B = 0.0*(Beq + dB2nd);
+	//double B = 0.1141*(Beq + dB2nd);
+
+	double B = 1.0*(Beq + dB2nd);
+
+	//cout << (2.0*PT/3.0+PL/3.0-p) << endl;
+	cout << B - Beq << endl;
+	cout << dB2nd << endl;
 	double pl = PL + B;
 	double pt = PT + B;
 	double Ea = e - B;
 	double lambda = 1.0 * T0;
 	double ax = 1.0;
 	double az = 1.0;
+
+
 
 	try
 	{
@@ -185,9 +195,9 @@ int main()
 
     cout << "\n\n PL/PT = " << PL/PT << endl;
 
-	cout << "\nlambda0 = " << lambda0 << endl;
-	cout << "ax0 = " << ax0 << endl;
-	cout << "az0 = " << az0 << endl;
+	cout << "\nlambda = " << lambda0 << ";" << endl;
+	cout << "ax = " << ax0 << ";" << endl;
+	cout << "az = " << az0 << ";" << endl;
 
 	//exit(-1);
 	//cout << p << endl;
@@ -218,7 +228,7 @@ int main()
 
 	// time data (t = tau)
 	double t = t0;
-	const double dt = 0.0005;
+	const double dt = 0.005;
 	const int n = floor((tf - t0) / dt);
 	const int timesteps_per_write = 10;
 
