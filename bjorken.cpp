@@ -157,7 +157,7 @@ int main()
 	//double PL = 0.014925 * e / 3.0;
 	//double PT = 1.4925 * e / 3.0;
 
-	double PLPTratio = 0.1;
+	double PLPTratio = 0.01;
 
 	double PT = (3.0/(2.0+PLPTratio)) * e / 3.0;
 	double PL = (3.0 - 6.0/(2.0+PLPTratio)) * e / 3.0;
@@ -176,7 +176,7 @@ int main()
 	dB2nd = -3.0*taubulk*mdmde_Quasiparticle(e)*(e+PL)*(2.0*PT/3.0+PL/3.0-p)/(t0*m0*m0) /  
 			(1.0 + 4.0*taubulk*mdmde_Quasiparticle(e)*(e+PL)/(t0*m0*m0));
 
-	double B = 1.0*(Beq + dB2nd);
+	double B = 0.142*(Beq + dB2nd);
 
 	//cout << (2.0*PT/3.0+PL/3.0-p) << endl;
 	//cout << B - Beq << endl;
@@ -210,7 +210,7 @@ int main()
 	cout << "ax = " << ax0 << ";" << endl;
 	cout << "az = " << az0 << ";" << endl;
 
-	exit(-1);
+	//exit(-1);
 	//cout << p << endl;
 	//cout << pkinetic - Beq << endl;
 
