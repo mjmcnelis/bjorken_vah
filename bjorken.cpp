@@ -162,25 +162,26 @@ int main()
 	double PT = (3.0/(2.0+PLPTratio)) * e / 3.0;
 	double PL = (3.0 - 6.0/(2.0+PLPTratio)) * e / 3.0;
 
-	
 
-	double dB2nd = -3.0*taubulk*mdmdT_Quasiparticle(T)/pow(z_Quasiparticle(T),2)*speedOfSoundSquared(e)*(2.0*PT/3.0+PL/3.0-p)/(t0*T);
-	//double B = 0.1141*(Beq + dB2nd);
-	cout << dB2nd << endl;
+	// double dB2nd = -3.0*taubulk*mdmdT_Quasiparticle(T)/pow(z_Quasiparticle(T),2)*speedOfSoundSquared(e)*(2.0*PT/3.0+PL/3.0-p)/(t0*T);
+	// double B = 0.1141*(Beq + dB2nd);
+	// cout << dB2nd << endl;
 
-	double m0 = T * z_Quasiparticle(T); 
+	double m = T * z_Quasiparticle(T);
 
 	// double a = 3.0*taubulk*mdmde_Quasiparticle(e)*(e+PL)/(t0*m0*m0);
 	// cout << 4.0/3.0*a << endl;
 
-	dB2nd = -3.0*taubulk*mdmde_Quasiparticle(e)*(e+PL)*(2.0*PT/3.0+PL/3.0-p)/(t0*m0*m0) /  
-			(1.0 + 4.0*taubulk*mdmde_Quasiparticle(e)*(e+PL)/(t0*m0*m0));
+	double dBasy = -3.0*taubulk*mdmde_Quasiparticle(e)*(e+PL)*(2.0*PT/3.0+PL/3.0-p)/(t0*m*m) /
+			(1.0 + 4.0*taubulk*mdmde_Quasiparticle(e)*(e+PL)/(t0*m*m));
 
-	double B = 0.142*(Beq + dB2nd);
+	double B = 0.142*(Beq + dBasy);
+
+	//double B = 1.0*(Beq + dBasy);
 
 	//cout << (2.0*PT/3.0+PL/3.0-p) << endl;
 	//cout << B - Beq << endl;
-	cout << dB2nd << endl;
+	cout << dBasy << endl;
 	double pl = PL + B;
 	double pt = PT + B;
 	double Ea = e - B;
@@ -252,7 +253,7 @@ int main()
 	ofstream piNSplot, bulkNSplot;
 	ofstream taupiplot, taubulkplot;
 
-	ofstream Bplot, Beqplot, dB2ndplot;
+	ofstream Bplot, Beqplot, dBasyplot;
 
 	eplot.open("eplot_vah.dat", ios::out);
 	piplot.open("piplot_vah.dat", ios::out);
@@ -275,7 +276,7 @@ int main()
 
 	Bplot.open("Bplot_vah.dat", ios::out);
 	Beqplot.open("Beqplot_vah.dat", ios::out);
-	dB2ndplot.open("dB2ndplot_vah.dat", ios::out);
+	dBasyplot.open("dBasyplot_vah.dat", ios::out);
 
 
 	eplot << "t [fm]" << "\t\t" << "e/e0" << endl << setprecision(5) << t << "\t\t" << e/e0 << endl;
@@ -297,9 +298,9 @@ int main()
 	taupiplot << "t [fm]" << "\t\t" << "tau_pi" << endl << setprecision(5) << t << "\t\t" << taupi << endl;
 	taubulkplot << "t [fm]" << "\t\t" << "tau_Pi" << endl << setprecision(5) << t << "\t\t" << taubulk << endl;
 
-	Bplot << "t [fm]" << "\t\t" << "B/e0" << endl << setprecision(5) << t << "\t\t" << B << endl;
+	Bplot << "t [fm]" << "\t\t" << "B" << endl << setprecision(5) << t << "\t\t" << B << endl;
 	Beqplot << "t [fm]" << "\t\t" << "Beq" << endl << setprecision(5) << t << "\t\t" << Beq << endl;
-	dB2ndplot << "t [fm]" << "\t\t" << "dB2nd" << endl << setprecision(5) << t << "\t\t" << dB2nd << endl;
+	dBasyplot << "t [fm]" << "\t\t" << "dB2nd" << endl << setprecision(5) << t << "\t\t" << dBasy << endl;
 
 	//evolution
 	for(int i = 0; i < n; i++)
@@ -354,6 +355,8 @@ int main()
 
 			Beq = equilibriumBquasi(T);
 
+			m = T * z_Quasiparticle(T);
+
 			piNS = 4.0 * (e+p) / (3.0*T*t) * shearViscosityToEntropyDensity(T);
 			bulkNS = - (e+p) / (t*T) * bulkViscosityToEntropyDensity(T);
 
@@ -361,8 +364,12 @@ int main()
 			taupi = (e+p) * shearViscosityToEntropyDensity(T) / (T*beta_shear(T));
 			taubulk = (e+p) * bulkViscosityToEntropyDensity(T) / (T*beta_bulk(T));
 
-			dB2nd = -3.0*taubulk*mdmdT_Quasiparticle(T)/pow(z_Quasiparticle(T),2)*
-					speedOfSoundSquared(e)*(2.0*pt/3.0+pl/3.0-B-p)/(t*T);
+			// dB2nd = -3.0*taubulk*mdmdT_Quasiparticle(T)/pow(z_Quasiparticle(T),2)*
+			// 		speedOfSoundSquared(e)*(2.0*pt/3.0+pl/3.0-B-p)/(t*T);
+
+
+			dBasy = -3.0*taubulk*mdmde_Quasiparticle(e)*(e+pl-B)*(2.0*pt/3.0+pl/3.0-B-p)/(t*m*m) /
+			(1.0 + 4.0*taubulk*mdmde_Quasiparticle(e)*(e+pl-B)/(t*m*m));
 
 			// write updated energy density to file
 			if((i+1)%timesteps_per_write == 0)
@@ -396,7 +403,7 @@ int main()
 
 				Bplot << setprecision(5) << t << "\t\t" << B  << "\t\t" << endl;
 				Beqplot << setprecision(5) << t << "\t\t" << Beq  << "\t\t" << endl;
-				dB2ndplot << setprecision(5) << t << "\t\t" << dB2nd  << "\t\t" << endl;
+				dBasyplot << setprecision(5) << t << "\t\t" << dBasy  << "\t\t" << endl;
 			}
 
 		} catch (char const *excp)  {
@@ -427,7 +434,7 @@ int main()
 
 	Bplot.close();
 	Beqplot.close();
-	dB2ndplot.close();
+	dBasyplot.close();
 
 
 
