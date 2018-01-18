@@ -177,7 +177,7 @@ void free_2D(double ** M, int n)
 
 
 
-void calculateFandJ(double Ea, double PTa, double PLa, double X[], double thermal_mass, double * F, double ** J, bool computeJ)
+void computeFandJ(double Ea, double PTa, double PLa, double X[], double thermal_mass, double * F, double ** J, bool computeJ)
 {
 	// anisotropic variables
 	double lambda = X[0];
@@ -280,6 +280,12 @@ void calculateFandJ(double Ea, double PTa, double PLa, double X[], double therma
 }
 
 
+double backtrack(double Xcurrent[], double X[], double gradf_Current[], double Fcurrent[], double F[], int i, double stepmax)
+{
+	double l = 1.0;  // default value
+	// does 
+	return l;
+}
 
 
 
@@ -340,8 +346,8 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 	double dXnorm2;           // L2-norm of dX iteration
 	double Fnorm2;		      // L2-norm of F
 	double toldX = 1.0e-7;    // tolerance for dX
-	double tolF = 1.0e-10;    // tolerance for F
-	double tolmin = 1.0e-6    // tolerance for spurious convergence to local min of f = F*F/2
+	double tolF = 1.0e-11;    // tolerance for F
+	double tolmin = 1.0e-6;   // tolerance for spurious convergence to local min of f = F*F/2
 	double stepmax = 100.0;   // scaled maximum step length allowed in line searches (I don't know what this means...)
 	double l; 		  		  // partial step parameter
 
@@ -358,6 +364,7 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 		computeFandJ(Ea, PTa, PLa, Xcurrent, thermal_mass, F, J, computeJ);
 
     	Fnorm2 = sqrt(fabs(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]));  // L2-norm of F(Xcurrent)
+    	//cout << "Fnorm2 = " << Fnorm2 << endl;
     	for(int k = 0; k < n; k++) Fcurrent[k] = F[k]; 	         // store current F (Fcurrent[i] = - p[i] from C++ recipes)
 	    fcurrent = 0.5*Fnorm2*Fnorm2; 					         // f(Xcurrent)
 
@@ -371,6 +378,10 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 	    	for(int m = 0; m < n; m++) gradf_sum += F[m] * J[m][k];
 	    	gradf[k] = gradf_sum;
 	    }
+
+	    // make
+	    // ./rta &
+	    
 
 	    // Solve matrix equation: J * dX = - F
 	    for(int k = 0; k < n; k++) F[k] = - F[k];  // change sign of F first
@@ -393,92 +404,100 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 		computeFandJ(Ea, PTa, PLa, X, thermal_mass, F, J, computeJ);
 		f = 0.5*fabs(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]);
 
-
-		// isn't it better to just calculate l and set the max to 1?
-
-		// I'm getting ahead of myself right now...stop
-		if(f < fcurrent)
-		{
-			l = 1.0;
-		}
-		else
-		{
-
-		}
+		l = backtrack(Xcurrent, X, gradf, Fcurrent, F, i, stepmax);
 
 
-		// here I probably need to calculate the new F and check if its norm has decreased
+		// // isn't it better to just calculate l and set the max to 1?
 
-	    // check whether or not F (or f?) decreased:
-	    // it'll go something like
-	    if(f > fold)
-	    {
-	    	// if 2nd:Nmax Newton fails use cubic g(l) solution
-	    	if(i > 0)
-	    	{
-	    		// work out all details of the cubic solution
+		// // I'm getting ahead of myself right now...stop
+		// if(f < fcurrent)
+		// {
+		// 	l = 1.0;
+		// }
+		// else
+		// {
 
-	    		g0 = F0;
-	    		g1 = F1;     // these guys need some work...
-	    		g2 = F2;
-	    		gprime0 = gradf * dX;
-
-	    		a = ((g1-gprime0*l1-g0)/(l1*l1) - (g2-gprime0*l2-g0)/(l2*l2)) / (l1-l2);
-				b = (-l2*(g1-gprime0*l1-g0)/(l1*l1) + l1*(g2-gprime0*l2-g0)/(l2*l2)) / (l1-l2);
-
-				// update current, previous and 2nd previous l's
-				l2 = l1;
-				l1 = l;
-				l = (-b + sqrt(b*b - 3.0*a*gprime0)) / (3.0*a);
-
-				if(l < 0.1*l2) // l1 used in routine stored in l2
-					l = 0.1 * l2;
-				if(l > 0.5*l2)
-					l = 0.5*l2;
-	    	}
-	    	// if 1st Newton fails use quadratic g(l) solution
-	    	else if(i == 0)
-	    	{
-	    		// work out details of the quadratic solution
-	    		g0 = Fold;
-	    		g1 = Fnew;
-	    		gprime0 = gradf * dX; // these guys need some work
-
-	    		// how to update l1, l2?...
+		// }
 
 
-	    		l = - gprime0 / (2.0*(g1 - g0 - gprime0));
+		// // here I probably need to calculate the new F and check if its norm has decreased
 
-	    		if(l < 0.1)
-	    			l = 0.1;
-	    		if(l > 0.5)
-	    			l = 0.5;
-	    	}
+	 //    // check whether or not F (or f?) decreased:
+	 //    // it'll go something like
+	 //    if(f > fold)
+	 //    {
+	 //    	// if 2nd:Nmax Newton fails use cubic g(l) solution
+	 //    	if(i > 0)
+	 //    	{
+	 //    		// work out all details of the cubic solution
+
+	 //    		g0 = F0;
+	 //    		g1 = F1;     // these guys need some work...
+	 //    		g2 = F2;
+	 //    		gprime0 = gradf * dX;
+
+	 //    		a = ((g1-gprime0*l1-g0)/(l1*l1) - (g2-gprime0*l2-g0)/(l2*l2)) / (l1-l2);
+		// 		b = (-l2*(g1-gprime0*l1-g0)/(l1*l1) + l1*(g2-gprime0*l2-g0)/(l2*l2)) / (l1-l2);
+
+		// 		// update current, previous and 2nd previous l's
+		// 		l2 = l1;
+		// 		l1 = l;
+		// 		l = (-b + sqrt(b*b - 3.0*a*gprime0)) / (3.0*a);
+
+		// 		if(l < 0.1*l2) // l1 used in routine stored in l2
+		// 			l = 0.1 * l2;
+		// 		if(l > 0.5*l2)
+		// 			l = 0.5*l2;
+	 //    	}
+	 //    	// if 1st Newton fails use quadratic g(l) solution
+	 //    	else if(i == 0)
+	 //    	{
+	 //    		// work out details of the quadratic solution
+	 //    		g0 = Fold;
+	 //    		g1 = Fnew;
+	 //    		gprime0 = gradf * dX; // these guys need some work
+
+	 //    		// how to update l1, l2?...
 
 
-	    }
-	    else if (f < fold)
-	    {
-	    	 l = 1.0;   // use full Newton step
-	    }
-	    else if (abs(f-fold) < tolF)
-	    {
-	    	if(abs(F) > tolF)
-	    	{
-	    		throw "Hit a local min f\n";
-	    	}
-	    }
+	 //    		l = - gprime0 / (2.0*(g1 - g0 - gprime0));
+
+	 //    		if(l < 0.1)
+	 //    			l = 0.1;
+	 //    		if(l > 0.5)
+	 //    			l = 0.5;
+	 //    	}
+
+
+	 //    }
+	 //    else if (f < fold)
+	 //    {
+	 //    	 l = 1.0;   // use full Newton step
+	 //    }
+	 //    else if (abs(f-fold) < tolF)
+	 //    {
+	 //    	if(abs(F) > tolF)
+	 //    	{
+	 //    		throw "Hit a local min f\n";
+	 //    	}
+	 //    }
 
 
 
-
+		 
 
 
 	    // redo the update for X_i using l from backtracking
-	    for(int k = 0; k < n; k++) X[k] = Xcurrent[k] + l*dX[k];
+	    for(int k = 0; k < n; k++) X[k] = Xcurrent[k] + fabs(l)*dX[k];
 
-	    // calculate L2-norm of dX iteration (evaluated at Xcurrent)
+	    // redo dX calulation also 
+	    for(int k = 0; k < n; k++) dX[k] *= fabs(l);
+
+	    // calculate L2-norm of dX iteration 
 	    dXnorm2 = sqrt(fabs(dX[0]*dX[0] + dX[1]*dX[1] + dX[2]*dX[2]));
+
+
+		//cout << "dXnorm2 = " << dXnorm2 << endl;
 
 		// // update individual variables
 		// lambdai = X[0];
@@ -503,7 +522,7 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
     		throw "az is negative\n";
     	}
 
-	}while((dXnorm2 > toldX) && (Fnorm2 > tolF) && (i < Nmax));
+	}while(((dXnorm2 > toldX) || (Fnorm2 > tolF)) && (i < Nmax));
 
 
 
