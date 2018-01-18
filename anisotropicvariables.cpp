@@ -177,9 +177,106 @@ void free_2D(double ** M, int n)
 
 
 
-void calculateFandJ(double lambda, double ax, double az, double T, int n, double * F, double ** J) 
+void calculateFandJ(double Ea, double PTa, double PLa, double X[], double thermal_mass, double * F, double ** J, bool computeJ)
 {
+	// anisotropic variables
+	double lambda = X[0];
+	double ax = X[1];
+	double az = X[2];
 
+	// guass laguerre roots and weights
+	const int pbar_pts = 32;
+
+	double pbar_rootF[pbar_pts] = {0.196943922146667,0.529487866050161,1.01026981913845,1.640616191672,2.42200673335506,3.35625823737525,4.44557319147359,5.69257570606939,7.10035048878373,8.67248915845674,10.413146435518,12.3271087558129,14.4198784243951,16.6977773650005,19.1680758788069,21.839153763432,24.7207039368187,27.823992811746,31.1621978174102,34.7508519173206,38.6084399084037,42.7572156420076,47.2243504952188,52.0435960848824,57.257778984273,62.9227106235616,69.1136582681551,75.9368320953467,83.5517824825995,92.221284870548,102.447989923982,115.52490220024};
+
+	double pbar_weightF[pbar_pts] = {0.00825033790777967,0.0671033262747106,0.206386098255352,0.368179392999486,0.446389764546666,0.397211321904435,0.270703020914857,0.144937243765141,0.0619302157291065,0.0213227539141068,0.00594841159169929,0.00134795257769464,0.000248166548996264,3.7053223540482e-05,4.47057760459712e-06,4.33555258401213e-07,3.35571417159735e-08,2.05432200435071e-09,9.83646900727572e-11,3.63364388210833e-12,1.01834576904109e-13,2.12110313498633e-15,3.20100105319804e-17,3.39007439648141e-19,2.41904571899768e-21,1.10270714408855e-23,2.98827103874582e-26,4.34972188455989e-29,2.92108431650778e-32,7.0533942409897e-36,3.81617106981223e-40,1.39864930768275e-45};
+
+	const double g = 51.4103536012791;            // degeneracy factor g (nf = 3 flavors)
+
+	double mbar = thermal_mass / lambda;          // mbar = m(T) / lambda
+
+	// Evaluate factors and prefactors for the F/J elements
+  	double lambda2 =  lambda * lambda;
+  	double lambda3 = lambda2 * lambda;
+  	double ax2 = ax * ax;
+  	double az2 = az * az;
+  	double lambdaax3 = lambda * ax2 * ax;
+  	double lambdaaz3 = lambda * az2 * az;
+
+  	double commonfactor = g * ax2 * az * lambda2 / (4.0*M_PI*M_PI);
+
+  	// calculate F
+	double factorEa = commonfactor * lambda2;
+    double factorPTa = commonfactor * ax2 * lambda2 / 2.0;
+    double factorPLa = commonfactor * az2 * lambda2;
+
+    double Eai = factorEa * Gauss_Aniso_1D(Ea_integrand, pbar_rootF, pbar_weightF, pbar_pts, ax, az, mbar);
+	double PTai = factorPTa * Gauss_Aniso_1D(PTa_integrand, pbar_rootF, pbar_weightF, pbar_pts, ax, az, mbar);
+	double PLai = factorPLa * Gauss_Aniso_1D(PLa_integrand, pbar_rootF, pbar_weightF, pbar_pts, ax, az, mbar);
+
+	////////////////////////////
+    //                        //
+    //   F  =  Eai - Ea       //
+    //         PTai - PTa     //
+    //         PLai - PLa     //
+    //                        //
+    ////////////////////////////
+
+	F[0] = Eai - Ea;
+	F[1] = PTai - PTa;
+	F[2] = PLai - PLa;
+
+
+    // also calculate J
+    if(computeJ)
+    {
+    	double pbar_rootJ[pbar_pts] = {0.299618729049241,0.701981065353977,1.24974569814569,1.94514382443706,2.78994869155499,3.78614305529879,4.93605293430173,6.24240692441721,7.70838362900271,9.3376617765878,11.1344784990019,13.1036993239838,15.2509033992287,17.5824881879873,20.1057991514724,22.8292918399089,25.7627366009885,28.9174802233293,32.3067850039226,35.9462752181738,39.8545359681502,44.0539338428991,48.5717701879893,53.4419507581545,58.7074908793654,64.4244418290391,70.6683893377061,77.5459900633602,85.2174664086695,93.9467116599065,104.238552969691,117.391742318923};
+
+		double pbar_weightJ[pbar_pts] = {0.00660146448073508,0.0813584931042281,0.347537436309438,0.809963198105261,1.22739584119905,1.32050782861975,1.06049919505728,0.655616488144915,0.318173017008472,0.122743109012855,0.0379333897858022,0.00943187028689987,0.00188978713293874,0.000304914974586437,3.95130877631855e-05,4.09377958251348e-06,3.36921618654073e-07,2.1841295448875e-08,1.10337736506627e-09,4.28638379146177e-11,1.25966453444067e-12,2.74423030367617e-14,4.32175197361363e-16,4.76686817705967e-18,3.53643350342934e-20,1.67355018349782e-22,4.70254099995936e-25,7.09116556196869e-28,4.93082516196282e-31,1.23284946609868e-34,6.91389702736573e-39,2.63586492716958e-44};
+
+    	double factorI2001 = commonfactor * lambda3;
+	    double factorI2011 = commonfactor * ax2 * lambda3 / 2.0;
+		double factorI2201 = commonfactor * az2 * lambda3;
+		// double factorI401m1 = factorI2011;
+		// double factorI420m1 = factorI2201;
+		double factorI402m1 = commonfactor * ax2 * ax2 * lambda3 / 8.0;
+		double factorI421m1 = commonfactor * ax2 * az2 * lambda3 / 2.0;
+		double factorI440m1 = commonfactor * az2 * az2 * lambda3;
+
+		double I2001 = factorI2001 * Gauss_Aniso_1D(I2001_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, ax, az, mbar);
+	    double I2011 = factorI2011 * Gauss_Aniso_1D(I2011_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, ax, az, mbar);
+	    double I2201 = factorI2201 * Gauss_Aniso_1D(I2201_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, ax, az, mbar);
+	    // double I401m1 = factorI401m1 * Gauss_Aniso_1D(I401m1_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, ax, az, mbar);
+	    // double I420m1 = factorI420m1 * Gauss_Aniso_1D(I420m1_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, ax, az, mbar);
+	    double I402m1 = factorI402m1 * Gauss_Aniso_1D(I402m1_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, ax, az, mbar);
+	    double I421m1 = factorI421m1 * Gauss_Aniso_1D(I421m1_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, ax, az, mbar);
+	    double I440m1 = factorI440m1 * Gauss_Aniso_1D(I440m1_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, ax, az, mbar);
+
+	    //////////////////////////////////////////////////////////////////////////////
+	    //                                                                          //
+	    //    J  =  I2001/lambda2   2*I401m1/lambda/ax3    I420m1/lambda/az3        //
+	    //                                                                          //
+	    //          I2011/lambda2   4*I402m1/lambda/ax3    I421m1/lambda/az3        //
+	    //                                                                          //
+	    //          I2201/lambda2   2*I421m1/lambda/ax3    I440m1/lambda/az3        //
+	    //                                                                          //
+	    //////////////////////////////////////////////////////////////////////////////
+
+	    // row 1
+	    J[0][0] = I2001/lambda2;
+	    //J[0][2] = I420m1 / lambdaaz3;
+	    //J[0][1] = 2.0 * I401m1 / lambdaiaxi3;
+	    J[0][1] = 2.0*(Eai+PTai)/ax;
+	    J[0][2] = (Eai+PLai)/az;
+	    // row 2
+	    J[1][0] = I2011/lambda2;
+	    J[1][1] = 4.0 * I402m1 / lambdaax3;
+	    J[1][2] = I421m1 / lambdaaz3;
+	    // row 3
+	    J[2][0] = I2201/lambda2;
+	    J[2][1] = 2.0 * I421m1 / lambdaax3;
+	    J[2][2] = I440m1 / lambdaaz3;
+    }
 }
 
 
@@ -206,94 +303,36 @@ void calculateFandJ(double lambda, double ax, double az, double T, int n, double
 void get_anisotropic_variables(double e, double pl, double pt, double B, double *lambda, double *ax, double *az)
 {
 	// not designed for conformal mode, it will crash
-
 	// (e,B,pt,pl) should already be updated before running this
 	// order: update conserved variables, update inferred variables, update anisotropic variables
 
-	const double T = effectiveTemperature(e);				   // temperature
+	const double T = effectiveTemperature(e);				 // temperature
+	double thermal_mass = z_Quasiparticle(T) * T;	   	     // m(T) fixed wpt lambda
 
-
-	//const double Ekinetic = equilibriumKineticEnergyDensity(T);    // quasiparticle kinetic energy density
-
-	//const double mbareq = z_Quasiparticle(T);
-	//const double Ekinetic = I20_function(T,mbareq);
-	//const double dB = B - equilibriumBquasi(T);
-
-	//const double Ea = Ekinetic - dB;
 	const double Ea = e - B;
 	const double PTa = pt;
 	const double PLa = pl;
 
-	//throw "Boom ";
-
-	if(Ea < 0.0)
-	{
-		throw "Ea is out of bounds!\n";
-	}
-	if(PTa < 0.0)
-	{
-		throw "PTa is out of bounds!\n";
-	}
-	if(PLa < 0.0)
-	{
-		throw "PLa is out of bounds!\n";
-	}
-
-	const double g = 51.4103536012791;                       // degeneracy factor g (nf = 3 flavors)
-
-	const int pbar_pts = 32;
-
-	double pbar_rootF[pbar_pts] = {0.196943922146667,0.529487866050161,1.01026981913845,1.640616191672,2.42200673335506,3.35625823737525,4.44557319147359,5.69257570606939,7.10035048878373,8.67248915845674,10.413146435518,12.3271087558129,14.4198784243951,16.6977773650005,19.1680758788069,21.839153763432,24.7207039368187,27.823992811746,31.1621978174102,34.7508519173206,38.6084399084037,42.7572156420076,47.2243504952188,52.0435960848824,57.257778984273,62.9227106235616,69.1136582681551,75.9368320953467,83.5517824825995,92.221284870548,102.447989923982,115.52490220024};
-
-	double pbar_weightF[pbar_pts] = {0.00825033790777967,0.0671033262747106,0.206386098255352,0.368179392999486,0.446389764546666,0.397211321904435,0.270703020914857,0.144937243765141,0.0619302157291065,0.0213227539141068,0.00594841159169929,0.00134795257769464,0.000248166548996264,3.7053223540482e-05,4.47057760459712e-06,4.33555258401213e-07,3.35571417159735e-08,2.05432200435071e-09,9.83646900727572e-11,3.63364388210833e-12,1.01834576904109e-13,2.12110313498633e-15,3.20100105319804e-17,3.39007439648141e-19,2.41904571899768e-21,1.10270714408855e-23,2.98827103874582e-26,4.34972188455989e-29,2.92108431650778e-32,7.0533942409897e-36,3.81617106981223e-40,1.39864930768275e-45};
-
-	double pbar_rootJ[pbar_pts] = {0.299618729049241,0.701981065353977,1.24974569814569,1.94514382443706,2.78994869155499,3.78614305529879,4.93605293430173,6.24240692441721,7.70838362900271,9.3376617765878,11.1344784990019,13.1036993239838,15.2509033992287,17.5824881879873,20.1057991514724,22.8292918399089,25.7627366009885,28.9174802233293,32.3067850039226,35.9462752181738,39.8545359681502,44.0539338428991,48.5717701879893,53.4419507581545,58.7074908793654,64.4244418290391,70.6683893377061,77.5459900633602,85.2174664086695,93.9467116599065,104.238552969691,117.391742318923};
-
-	double pbar_weightJ[pbar_pts] = {0.00660146448073508,0.0813584931042281,0.347537436309438,0.809963198105261,1.22739584119905,1.32050782861975,1.06049919505728,0.655616488144915,0.318173017008472,0.122743109012855,0.0379333897858022,0.00943187028689987,0.00188978713293874,0.000304914974586437,3.95130877631855e-05,4.09377958251348e-06,3.36921618654073e-07,2.1841295448875e-08,1.10337736506627e-09,4.28638379146177e-11,1.25966453444067e-12,2.74423030367617e-14,4.32175197361363e-16,4.76686817705967e-18,3.53643350342934e-20,1.67355018349782e-22,4.70254099995936e-25,7.09116556196869e-28,4.93082516196282e-31,1.23284946609868e-34,6.91389702736573e-39,2.63586492716958e-44};
-
-
-	double lambdai = *lambda;			                     // initial guess for anisotropic variables
-	double axi = *ax;										 // are previous time step values
-	double azi = *az;
-
+	if(Ea < 0.0) throw "Ea is out of bounds!\n";
+	if(PTa < 0.0) throw "PTa is out of bounds!\n";
+	if(PLa < 0.0) throw "PLa is out of bounds!\n";
 
 	const int n = 3; 										 // dimension space
-	double X[n] = {lambdai, axi, azi};						 // initialize solution vector; will iterate w/ + l*dX 
-	double Xcurrent[n];						     		     // holder for current X solution 
-	double dX[n];							 				 // dX iteration 
+	double X[n] = {*lambda, *ax, *az};						 // initialize solution vector to guess; will iterate w/ + l*dX
+	double Xcurrent[n];						     		     // holder for current X solution
+	double dX[n];							 				 // dX iteration
   	double F[n];  											 // F vector (root equation: F[X] = 0)
-  	double Fcurrent[n];  									 // holder for current F 
-  	double fnewton;		                                     // f = 0.5 F * F at Xcurrent+dX (full Newton)
+  	double Fcurrent[n];  									 // holder for current F
+  	double fnewton;		                                     // f = 0.5 F * F at Xcurrent+dX (full Newton step)
   	double fcurrent;										 // f = 0.5 F * F at Xcurrent
-	// J = Jacobian of F
-	double **J = (double **) malloc(n * sizeof(double *));
-	for(int k = 0; k < n; k++) J[k] = (double *) malloc(n* sizeof(double));
-
+	double **J = (double **) malloc(n * sizeof(double *));   // J = Jacobian of F
 	double gradf[n];										 // gradient of f = F*F/2
-	double gradf_sum; 										 // for gradf calculation 
+	double gradf_sum; 										 // for gradf calculation
  	int pvector[n];									  		 // permutation vector
+ 	bool computeJ;											 // option to compute J
 
-
- 	// mbar = m(T) / lambda
-	double thermal_mass = z_Quasiparticle(T) * T;	     // m(T) fixed wpt lambda
-	double mbari;                   				     // mbar = m(T) / lambda
-
-
-	// prefactors and factors of F/J elements: to be evaluated at ith iteration of X
- 	double commonfactori;
-  	double lambdai2, lambdai3, axi2, azi2, lambdaiaxi3, lambdaiazi3;
-  	double factorEai, factorPTai, factorPLai;
-  	double factorI2001, factorI2011, factorI2201, factorI402m1, factorI421m1, factorI440m1;
-
-  	double factorI401m1, factorI420m1;
-
-
-	// anisotropic functions evaluated at ith iteration of X
-	double Eai, PTai, PLai;
-	double I2001, I2011, I2201, I402m1, I421m1, I440m1;
-
-	double I401m1, I420m1;
-
+ 	// allocate Jacobian matrix
+ 	for(int k = 0; k < n; k++) J[k] = (double *) malloc(n* sizeof(double));
 
 
 	int i = 0;				  // starting ith iteration
@@ -304,135 +343,36 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 	double tolF = 1.0e-10;    // tolerance for F
 	double tolmin = 1.0e-6    // tolerance for spurious convergence to local min of f = F*F/2
 	double stepmax = 100.0;   // scaled maximum step length allowed in line searches (I don't know what this means...)
-
-
-	double l = 1.0;  // default value for the line backtracking 
+	double l; 		  		  // partial step parameter
 
 	//stepmax calculation
-	stepmax = stepmax*fmax(sqrt(X[0]*X[0]+X[1]*X[1]+X[2]*X[2]),(double)n);   // no idea what this means... 
+	stepmax = stepmax*fmax(sqrt(X[0]*X[0]+X[1]*X[1]+X[2]*X[2]),(double)n);   // no idea what this means...
 
-	
-
-	// Find anisotropic variables using 3D Newton Method
+	// 3D Newton Method with line backtracking
 	do{
-		// store current solution
-		for(int k = 0; k < n; k++) Xcurrent[k] = X[k];    
-		
-		// Evaluate mass parameter
-		mbari = thermal_mass / lambdai;
-
-		// Evaluate factors and prefactors
-		lambdai2 = lambdai * lambdai;
-	    lambdai3 = lambdai2 * lambdai;
-	    axi2 = axi * axi;
-	    azi2 = azi * azi;
-	    lambdaiaxi3 = lambdai * axi * axi2;
-	    lambdaiazi3 = lambdai * azi * azi2;
-
-	    // Default prefactor for the momemt (n,l,q,s) = 0
-	    commonfactori = g * axi2 * azi * lambdai2 / (4.0*M_PI*M_PI);
-
-	    factorEai = commonfactori * lambdai2;
-	    factorPTai = commonfactori * axi2 * lambdai2 / 2.0;
-	    factorPLai = commonfactori * azi2 * lambdai2;
-
-	    factorI2001 = commonfactori * lambdai3;
-	    factorI2011 = commonfactori * axi2 * lambdai3 / 2.0;
-	    factorI2201 = commonfactori * azi2 * lambdai3;
-
-	    factorI401m1 = factorI2011;
-	    factorI420m1 = factorI2201;
-
-	    factorI402m1 = commonfactori * axi2 * axi2 * lambdai3 / 8.0;
-	    factorI421m1 = commonfactori * axi2 * azi2 * lambdai3 / 2.0;
-	    factorI440m1 = commonfactori * azi2 * azi2 * lambdai3;
+		for(int k = 0; k < n; k++) Xcurrent[k] = X[k];	         // store current solution
 
 
+		// compute F and J at Xcurrent
+		computeJ = true;
+		computeFandJ(Ea, PTa, PLa, Xcurrent, thermal_mass, F, J, computeJ);
 
-	    // Evaluate anisotropic functions for F  (1D Gauss Laguerre integrals)
-	    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-	    Eai = factorEai * Gauss_Aniso_1D(Ea_integrand, pbar_rootF, pbar_weightF, pbar_pts, axi, azi, mbari);
-	    PTai = factorPTai * Gauss_Aniso_1D(PTa_integrand, pbar_rootF, pbar_weightF, pbar_pts, axi, azi, mbari);
-	    PLai = factorPLai * Gauss_Aniso_1D(PLa_integrand, pbar_rootF, pbar_weightF, pbar_pts, axi, azi, mbari);
-
-
-	    ////////////////////////////
-	    //                        //
-	    //   F  =  Eai - Ea       //
-	    //         PTai - PTa     //
-	    //         PLai - PLa     //
-	    //                        //
-	    ////////////////////////////
+    	Fnorm2 = sqrt(fabs(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]));  // L2-norm of F(Xcurrent)
+    	for(int k = 0; k < n; k++) Fcurrent[k] = F[k]; 	         // store current F (Fcurrent[i] = - p[i] from C++ recipes)
+	    fcurrent = 0.5*Fnorm2*Fnorm2; 					         // f(Xcurrent)
 
 
-		F[0] = Eai - Ea;
-    	F[1] = PTai - PTa;
-    	F[2] = PLai - PLa;
-
-    	Fnorm2 = sqrt(fabs(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]));  // calculate L2-norm of F evaluated at Xcurrent 
-    	for(int k = 0; k < n; k++) Fcurrent[k] = F[k]; 	         // store current F (Fcurrent[i] = - p[i] from C++ recipes) 
-	    fcurrent = 0.5*Fnorm2*Fnorm2; 					         // f evaluated at Xcurrent  
-
-    	// Evaluate anisotropic functions for J (more 1D Gauss-Laguerre integrals)
-	    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-	    I2001 = factorI2001 * Gauss_Aniso_1D(I2001_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, axi, azi, mbari);
-	    I2011 = factorI2011 * Gauss_Aniso_1D(I2011_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, axi, azi, mbari);
-	    I2201 = factorI2201 * Gauss_Aniso_1D(I2201_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, axi, azi, mbari);
-
-	    I401m1 = factorI401m1 * Gauss_Aniso_1D(I401m1_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, axi, azi, mbari);
-	    I420m1 = factorI420m1 * Gauss_Aniso_1D(I420m1_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, axi, azi, mbari);
-
-	    I402m1 = factorI402m1 * Gauss_Aniso_1D(I402m1_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, axi, azi, mbari);
-	    I421m1 = factorI421m1 * Gauss_Aniso_1D(I421m1_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, axi, azi, mbari);
-	    I440m1 = factorI440m1 * Gauss_Aniso_1D(I440m1_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, axi, azi, mbari);
-
-
-	    //////////////////////////////////////////////////////////////////////////////
-	    //                                                                          //
-	    //    J  =  I2001/lambda2   2*I401m1/lambda/ax3    I420m1/lambda/az3        //
-	    //                                                                          //
-	    //          I2011/lambda2   4*I402m1/lambda/ax3    I421m1/lambda/az3        //
-	    //                                                                          //
-	    //          I2201/lambda2   2*I421m1/lambda/ax3    I440m1/lambda/az3        //
-	    //                                                                          //
-	    //////////////////////////////////////////////////////////////////////////////
-
-	    // row 1
-	    J[0][0] = I2001/lambdai2;
-	    J[0][1] = 2.0 * I401m1 / lambdaiaxi3;
-	    //J[0][1] = 2.0*(Eai+PTai)/axi;
-	    J[0][2] = I420m1 / lambdaiazi3;
-	    //J[0][2] = (Eai+PLai)/azi;
-	    // row 2
-	    J[1][0] = I2011/lambdai2;
-	    J[1][1] = 4.0 * I402m1 / lambdaiaxi3;
-	    J[1][2] = I421m1 / lambdaiazi3;
-	    // row 3
-	    J[2][0] = I2201/lambdai2;
-	    J[2][1] = 2.0 * I421m1 / lambdaiaxi3;
-	    J[2][2] = I440m1 / lambdaiazi3;
-
-
-
-
-	    // compute gradient vector of f = F*F/2 evaluated at Xcurrent
-	    // gradf[k] = sum_m J[m][k]*F[m]
+	    // compute gradient of F*F/2: gradf(Xcurrent)
+	    // gradf_k = F_m * J_mk
 
 	    for(int k = 0; k < n; k++)
 	    {
 	    	gradf_sum = 0.0; // clear sum
-
-	    	for(int m = 0; m < n; m++)
-	    	{
-	    		gradf_sum += J[m][k] * F[m]; 
-	    	}
-	    	gradf[k] = gradf_sum; 
+	    	for(int m = 0; m < n; m++) gradf_sum += F[m] * J[m][k];
+	    	gradf[k] = gradf_sum;
 	    }
 
-
-
 	    // Solve matrix equation: J * dX = - F
-	   
 	    for(int k = 0; k < n; k++) F[k] = - F[k];  // change sign of F first
 	    // LU solver routine
 	    LUP_decomposition(J, n, pvector);          // LUP of J now stored in J (pvector also updated)
@@ -441,18 +381,33 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 
 
 
+	    // Line backtracking algorithm (solve for l)
 
-	    // Line backtracking algorithm (solves for l) 
+	    l = 1.0;  // default value
 
-	    l = 1.0;  // default value 
-
-		// by default update X using the full Newton step dX (i.e. l = 1)
+		// default Newton iteration (l = 1)
 		for(int k = 0; k < n; k++) X[k] += dX[k];
 
-		// calculate and check if the full Newton step decreased f 
+		// Calculate F(X) and check if f(X) < f(Xcurrent)
+		computeJ = false;
+		computeFandJ(Ea, PTa, PLa, X, thermal_mass, F, J, computeJ);
+		f = 0.5*fabs(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]);
 
 
-		// here I probably need to calculate the new F and check if its norm has decreased 
+		// isn't it better to just calculate l and set the max to 1?
+
+		// I'm getting ahead of myself right now...stop
+		if(f < fcurrent)
+		{
+			l = 1.0;
+		}
+		else
+		{
+
+		}
+
+
+		// here I probably need to calculate the new F and check if its norm has decreased
 
 	    // check whether or not F (or f?) decreased:
 	    // it'll go something like
@@ -519,30 +474,30 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 
 
 
-	    // redo the update for X_i using l from backtracking 
+	    // redo the update for X_i using l from backtracking
 	    for(int k = 0; k < n; k++) X[k] = Xcurrent[k] + l*dX[k];
 
 	    // calculate L2-norm of dX iteration (evaluated at Xcurrent)
 	    dXnorm2 = sqrt(fabs(dX[0]*dX[0] + dX[1]*dX[1] + dX[2]*dX[2]));
 
-		// update individual variables
-		lambdai = X[0];
-   	 	axi = X[1];
-    	azi = X[2];
+		// // update individual variables
+		// lambdai = X[0];
+  		// axi = X[1];
+  		// azi = X[2];
 
 		i++;
 
-		if(lambdai < 0.0)
+		if(X[0] < 0.0)
 		{
 			cout << "At iteration " << i << ": ";
     		throw "lambda is negative\n";
 		}
-    	if(axi < 0.0)
+    	if(X[1] < 0.0)
     	{
     		cout << "At iteration " << i << ": ";
     		throw "ax is negative\n";
     	}
-    	if(azi < 0.0)
+    	if(X[2] < 0.0)
     	{
     		cout << "At iteration " << i << ": ";
     		throw "az is negative\n";
