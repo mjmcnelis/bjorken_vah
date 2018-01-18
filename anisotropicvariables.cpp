@@ -26,7 +26,7 @@ using namespace std;
 
 void LUP_decomposition(double ** A, int n, int * pvector)
 {
-	// A = n x n matrix; function does A -> PA = LU; (L,U) of PA stored in same array
+	// A = n x n matrix; function does A -> PA = LU; (L,U) of PA stored in same ** array
 	// n = size of A
 	// pvector = permutation vector; set initial pvector[i] = i (to track implicit partial pivoting)
 	// 			 function updates pvector if there are any rows exchanges in A (to be used on b in LUP_solve)
@@ -177,7 +177,10 @@ void free_2D(double ** M, int n)
 
 
 
+void calculateFandJ(double lambda, double ax, double az, double T, int n, double * F, double ** J) 
+{
 
+}
 
 
 
@@ -255,12 +258,19 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 
 
 	const int n = 3; 										 // dimension space
-	double X[n] = {lambdai, axi, azi};						 // initial guess vector
-	double Xold[n] = {lambdai,axi,azi};						 // original guess
+	double X[n] = {lambdai, axi, azi};						 // initialize solution vector; will iterate w/ + l*dX 
+	double Xcurrent[n];						     		     // holder for current X solution 
+	double dX[n];							 				 // dX iteration 
   	double F[n];  											 // F vector (root equation: F[X] = 0)
+  	double Fcurrent[n];  									 // holder for current F 
+  	double fnewton;		                                     // f = 0.5 F * F at Xcurrent+dX (full Newton)
+  	double fcurrent;										 // f = 0.5 F * F at Xcurrent
 	// J = Jacobian of F
 	double **J = (double **) malloc(n * sizeof(double *));
 	for(int k = 0; k < n; k++) J[k] = (double *) malloc(n* sizeof(double));
+
+	double gradf[n];										 // gradient of f = F*F/2
+	double gradf_sum; 										 // for gradf calculation 
  	int pvector[n];									  		 // permutation vector
 
 
@@ -290,22 +300,24 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 	int Nmax = 1000;	      // max number of iterations
 	double dXnorm2;           // L2-norm of dX iteration
 	double Fnorm2;		      // L2-norm of F
-	double toldX = 1.0e-8;    // tolerance for dX
-	double tolF = 1.0e-11;    // tolerance for F
+	double toldX = 1.0e-7;    // tolerance for dX
+	double tolF = 1.0e-10;    // tolerance for F
+	double tolmin = 1.0e-6    // tolerance for spurious convergence to local min of f = F*F/2
+	double stepmax = 100.0;   // scaled maximum step length allowed in line searches (I don't know what this means...)
 
-	toldX = 1.0e-7;
-	tolF = 1.0e-10;
 
-	double l = 0.1;
+	double l = 1.0;  // default value for the line backtracking 
 
-	int m = 0;
-	// I should spend Christmas break working on the Broydyn method
+	//stepmax calculation
+	stepmax = stepmax*fmax(sqrt(X[0]*X[0]+X[1]*X[1]+X[2]*X[2]),(double)n);   // no idea what this means... 
+
+	
 
 	// Find anisotropic variables using 3D Newton Method
 	do{
-
-		//cout << i << ", ";
-
+		// store current solution
+		for(int k = 0; k < n; k++) Xcurrent[k] = X[k];    
+		
 		// Evaluate mass parameter
 		mbari = thermal_mass / lambdai;
 
@@ -357,8 +369,9 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
     	F[1] = PTai - PTa;
     	F[2] = PLai - PLa;
 
-		// Calculate L2-norm of F
-    	Fnorm2 = sqrt(fabs(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]));
+    	Fnorm2 = sqrt(fabs(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]));  // calculate L2-norm of F evaluated at Xcurrent 
+    	for(int k = 0; k < n; k++) Fcurrent[k] = F[k]; 	         // store current F (Fcurrent[i] = - p[i] from C++ recipes) 
+	    fcurrent = 0.5*Fnorm2*Fnorm2; 					         // f evaluated at Xcurrent  
 
     	// Evaluate anisotropic functions for J (more 1D Gauss-Laguerre integrals)
 	    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -401,95 +414,116 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 
 
 
+
+	    // compute gradient vector of f = F*F/2 evaluated at Xcurrent
+	    // gradf[k] = sum_m J[m][k]*F[m]
+
+	    for(int k = 0; k < n; k++)
+	    {
+	    	gradf_sum = 0.0; // clear sum
+
+	    	for(int m = 0; m < n; m++)
+	    	{
+	    		gradf_sum += J[m][k] * F[m]; 
+	    	}
+	    	gradf[k] = gradf_sum; 
+	    }
+
+
+
 	    // Solve matrix equation: J * dX = - F
-	    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+	   
 	    for(int k = 0; k < n; k++) F[k] = - F[k];  // change sign of F first
 	    // LU solver routine
 	    LUP_decomposition(J, n, pvector);          // LUP of J now stored in J (pvector also updated)
-	    LUP_solve(J, n, pvector, F);               // dX is now stored in F
-	    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-
-	    // here F is the full Newton step dX
-
-	   //  l = 1.0;
-
-	   //  // check whether or not F (or f?) decreased:
-	   //  // it'll go something like
-	   //  if(f > fold)
-	   //  {
-	   //  	// if 2nd:Nmax Newton fails use cubic g(l) solution
-	   //  	if(i > 0)
-	   //  	{
-	   //  		// work out all details of the cubic solution
-
-	   //  		g0 = F0;
-	   //  		g1 = F1;     // these guys need some work...
-	   //  		g2 = F2;
-	   //  		gprime0 = gradf * dX;
-
-	   //  		a = ((g1-gprime0*l1-g0)/(l1*l1) - (g2-gprime0*l2-g0)/(l2*l2)) / (l1-l2);
-				// b = (-l2*(g1-gprime0*l1-g0)/(l1*l1) + l1*(g2-gprime0*l2-g0)/(l2*l2)) / (l1-l2);
-
-				// // update current, previous and 2nd previous l's
-				// l2 = l1;
-				// l1 = l;
-				// l = (-b + sqrt(b*b - 3.0*a*gprime0)) / (3.0*a);
-
-				// if(l < 0.1*l2) // l1 used in routine stored in l2
-				// 	l = 0.1 * l2;
-				// if(l > 0.5*l2)
-				// 	l = 0.5*l2;
-	   //  	}
-	   //  	// if 1st Newton fails use quadratic g(l) solution
-	   //  	else if(i == 0)
-	   //  	{
-	   //  		// work out details of the quadratic solution
-	   //  		g0 = Fold;
-	   //  		g1 = Fnew;
-	   //  		gprime0 = gradf * dX; // these guys need some work
-
-	   //  		// how to update l1, l2?...
-
-
-	   //  		l = - gprime0 / (2.0*(g1 - g0 - gprime0));
-
-	   //  		if(l < 0.1)
-	   //  			l = 0.1;
-	   //  		if(l > 0.5)
-	   //  			l = 0.5;
-	   //  	}
-
-
-	   //  }
-	   //  else if (f < fold)
-	   //  {
-	   //  	 l = 1.0;   // use full Newton step
-	   //  }
-	   //  else if (abs(f-fold) < tolF)
-	   //  {
-	   //  	if(abs(F) > tolF)
-	   //  	{
-	   //  		throw "Hit a local min f\n";
-	   //  	}
-	   //  }
+	    LUP_solve(J, n, pvector, F);               // dX is now stored in F (F is no longer F)
+	    for(int k = 0; k < n; k++) dX[k] = F[k];   // load full Newton iteration dX
 
 
 
 
+	    // Line backtracking algorithm (solves for l) 
+
+	    l = 1.0;  // default value 
+
+		// by default update X using the full Newton step dX (i.e. l = 1)
+		for(int k = 0; k < n; k++) X[k] += dX[k];
+
+		// calculate and check if the full Newton step decreased f 
+
+
+		// here I probably need to calculate the new F and check if its norm has decreased 
+
+	    // check whether or not F (or f?) decreased:
+	    // it'll go something like
+	    if(f > fold)
+	    {
+	    	// if 2nd:Nmax Newton fails use cubic g(l) solution
+	    	if(i > 0)
+	    	{
+	    		// work out all details of the cubic solution
+
+	    		g0 = F0;
+	    		g1 = F1;     // these guys need some work...
+	    		g2 = F2;
+	    		gprime0 = gradf * dX;
+
+	    		a = ((g1-gprime0*l1-g0)/(l1*l1) - (g2-gprime0*l2-g0)/(l2*l2)) / (l1-l2);
+				b = (-l2*(g1-gprime0*l1-g0)/(l1*l1) + l1*(g2-gprime0*l2-g0)/(l2*l2)) / (l1-l2);
+
+				// update current, previous and 2nd previous l's
+				l2 = l1;
+				l1 = l;
+				l = (-b + sqrt(b*b - 3.0*a*gprime0)) / (3.0*a);
+
+				if(l < 0.1*l2) // l1 used in routine stored in l2
+					l = 0.1 * l2;
+				if(l > 0.5*l2)
+					l = 0.5*l2;
+	    	}
+	    	// if 1st Newton fails use quadratic g(l) solution
+	    	else if(i == 0)
+	    	{
+	    		// work out details of the quadratic solution
+	    		g0 = Fold;
+	    		g1 = Fnew;
+	    		gprime0 = gradf * dX; // these guys need some work
+
+	    		// how to update l1, l2?...
+
+
+	    		l = - gprime0 / (2.0*(g1 - g0 - gprime0));
+
+	    		if(l < 0.1)
+	    			l = 0.1;
+	    		if(l > 0.5)
+	    			l = 0.5;
+	    	}
+
+
+	    }
+	    else if (f < fold)
+	    {
+	    	 l = 1.0;   // use full Newton step
+	    }
+	    else if (abs(f-fold) < tolF)
+	    {
+	    	if(abs(F) > tolF)
+	    	{
+	    		throw "Hit a local min f\n";
+	    	}
+	    }
 
 
 
 
 
 
+	    // redo the update for X_i using l from backtracking 
+	    for(int k = 0; k < n; k++) X[k] = Xcurrent[k] + l*dX[k];
 
-
-	    // update X_i
-	    for(int k = 0; k < n; k++) X[k] += (l * F[k]);
-
-	    // calculate L2-norm of dX iteration
-	    dXnorm2 = sqrt(fabs(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]));
+	    // calculate L2-norm of dX iteration (evaluated at Xcurrent)
+	    dXnorm2 = sqrt(fabs(dX[0]*dX[0] + dX[1]*dX[1] + dX[2]*dX[2]));
 
 		// update individual variables
 		lambdai = X[0];
@@ -514,15 +548,6 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
     		throw "az is negative\n";
     	}
 
-    	// if(i == Nmax -1)
-    	// {
-    	// 	cout << ""
-    	// 	lambdai = Xold[0];
-    	// 	axi = Xold[1];
-    	// 	i = 0;
-    	// }
-
-
 	}while((dXnorm2 > toldX) && (Fnorm2 > tolF) && (i < Nmax));
 
 
@@ -530,9 +555,12 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 	if(i < Nmax)
 	{
 		// final answer
-		*lambda = lambdai;
-		*ax = axi;
-		*az = azi;
+		*lambda = Xcurrent[0];
+		*ax = Xcurrent[1];
+		*az = Xcurrent[2];
+		// *lambda = lambdai;
+		// *ax = axi;
+		// *az = azi;
 		cout << i << " ";
 	}
 	else
