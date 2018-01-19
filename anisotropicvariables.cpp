@@ -280,10 +280,60 @@ void computeFandJ(double Ea, double PTa, double PLa, double X[], double thermal_
 }
 
 
-double backtrack(double Xcurrent[], double X[], double gradf_Current[], double Fcurrent[], double F[], int i, double stepmax)
+double backtrack(double Xcurrent[], double dX[], double Fcurrent[], double F[], double gradfcurrent[], double toldX, int n)
 {
+	double alpha = 0.0001; 
+
+	double dXnorm2 = sqrt(fabs(dX[0]*dX[0]+dX[1]*dX[1]+dX[2]*dX[2])); 
+
 	double l = 1.0;  // default value
-	// does 
+
+	double lmin = toldX / dXnorm2;
+
+	if(l < lmin)
+	{
+		return l; 
+	}  
+
+	double X[3] = {Xcurrent[0]+dX[0], Xcurrent[1]+dX[1], Xcurrent[2]+dX[2]};
+
+
+	double fcurrent = 0.5*(Fcurrent[0]*Fcurrent[0] + Fcurrent[1]*Fcurrent[1] + Fcurrent[2]*Fcurrent[2]);   // f(Xcurrent)
+	double f = 0.5*fabs(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]);	  											   // f(X_Newton)
+
+	double g0 = fcurrent;
+	double gprime0 = 0.0;
+	for(int k = 0; k < n; k++) gprime0 += gradfcurrent[k]*dX[k]; 
+	if(gprime >= 0.0)
+		throw "\nRoundoff issue with gradient descent"; 
+
+
+
+
+	if(f <= fcurrent + alpha*gprime0)
+	{
+		return l; 
+	}
+	else
+	{
+		double l2; 
+		double g2; 
+		do
+		{
+			if(l == 1.0)
+			{
+				l = - gprime0 / (2.0*(g1 - g0 - gprime0));  // quadratic formula 
+			}
+			else
+			{
+				f2 = f;
+				
+				g2 = f2;
+			}
+
+		} while(f > fcurrent + alpha*l*gprime0)
+		
+	}
 	return l;
 }
 
@@ -352,7 +402,7 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 	double l; 		  		  // partial step parameter
 
 	//stepmax calculation
-	stepmax = stepmax*fmax(sqrt(X[0]*X[0]+X[1]*X[1]+X[2]*X[2]),(double)n);   // no idea what this means...
+	stepmax = stepmax*fmax(sqrt(fabs(X[0]*X[0]+X[1]*X[1]+X[2]*X[2])),(double)n);   // no idea what this means...
 
 	// 3D Newton Method with line backtracking
 	do{
@@ -366,7 +416,7 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
     	Fnorm2 = sqrt(fabs(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]));  // L2-norm of F(Xcurrent)
     	//cout << "Fnorm2 = " << Fnorm2 << endl;
     	for(int k = 0; k < n; k++) Fcurrent[k] = F[k]; 	         // store current F (Fcurrent[i] = - p[i] from C++ recipes)
-	    fcurrent = 0.5*Fnorm2*Fnorm2; 					         // f(Xcurrent)
+	    //fcurrent = 0.5*Fnorm2*Fnorm2; 					         // f(Xcurrent)
 
 
 	    // compute gradient of F*F/2: gradf(Xcurrent)
@@ -391,20 +441,30 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 	    for(int k = 0; k < n; k++) dX[k] = F[k];   // load full Newton iteration dX
 
 
+	    // rescale dX if too large
+	    dXnorm2 = sqrt(fabs(dX[0]*dX[0]+dX[1]*dX[1]+dX[2]*dX[2]));
+		if(dXnorm2 > stepmax)
+		{
+			cout << "Newton step is too large" << endl; 
+			for(int k = 0; k < n; k++) dX[k] *= (stepmax/dXnorm); 
+		}
 
 	    // Line backtracking algorithm (solve for l)
 
-	    l = 1.0;  // default value
 
 		// default Newton iteration (l = 1)
 		for(int k = 0; k < n; k++) X[k] += dX[k];
 
-		// Calculate F(X) and check if f(X) < f(Xcurrent)
+		// calculate F(X)
 		computeJ = false;
 		computeFandJ(Ea, PTa, PLa, X, thermal_mass, F, J, computeJ);
-		f = 0.5*fabs(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]);
+		//f = 0.5*(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]); 
+		
+		// compute l 
+		l = backtrack(Xcurrent, X, dX, Fcurrent, F, gradf, toldX, n);
 
-		l = backtrack(Xcurrent, X, gradf, Fcurrent, F, i, stepmax);
+
+
 
 
 		// // isn't it better to just calculate l and set the max to 1?
@@ -493,7 +553,7 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 	    // redo dX calulation also 
 	    for(int k = 0; k < n; k++) dX[k] *= fabs(l);
 
-	    // calculate L2-norm of dX iteration 
+	    // redo L2-norm of dX iteration 
 	    dXnorm2 = sqrt(fabs(dX[0]*dX[0] + dX[1]*dX[1] + dX[2]*dX[2]));
 
 
