@@ -177,7 +177,7 @@ void free_2D(double ** M, int n)
 
 
 
-void computeFandJ(double Ea, double PTa, double PLa, double X[], double thermal_mass, double * F, double ** J, bool computeJ)
+void computeFandJ(double Ea, double PTa, double PLa, double thermal_mass, double X[], double * F, double ** J, bool computeJ)
 {
 	// anisotropic variables
 	double lambda = X[0];
@@ -227,7 +227,7 @@ void computeFandJ(double Ea, double PTa, double PLa, double X[], double thermal_
 	F[2] = PLai - PLa;
 
 
-    // also calculate J
+    // if computeJ = true, then also calculate J
     if(computeJ)
     {
     	double pbar_rootJ[pbar_pts] = {0.299618729049241,0.701981065353977,1.24974569814569,1.94514382443706,2.78994869155499,3.78614305529879,4.93605293430173,6.24240692441721,7.70838362900271,9.3376617765878,11.1344784990019,13.1036993239838,15.2509033992287,17.5824881879873,20.1057991514724,22.8292918399089,25.7627366009885,28.9174802233293,32.3067850039226,35.9462752181738,39.8545359681502,44.0539338428991,48.5717701879893,53.4419507581545,58.7074908793654,64.4244418290391,70.6683893377061,77.5459900633602,85.2174664086695,93.9467116599065,104.238552969691,117.391742318923};
@@ -280,59 +280,80 @@ void computeFandJ(double Ea, double PTa, double PLa, double X[], double thermal_
 }
 
 
-double backtrack(double Xcurrent[], double dX[], double Fcurrent[], double F[], double gradfcurrent[], double toldX, int n)
+double linebacktrack(double Ea, double PTa, double PLa, double thermal_mass, double Xcurrent[], double dX[], double Fcurrent[], double F[], double gradfcurrent[], double ** J, double toldX, int n)
 {
-	double alpha = 0.0001; 
+	double l = 1.0;          // default value
+	double alpha = 0.0001;   // constant for sufficient decrease of f
 
-	double dXnorm2 = sqrt(fabs(dX[0]*dX[0]+dX[1]*dX[1]+dX[2]*dX[2])); 
-
-	double l = 1.0;  // default value
-
+	double dXnorm2 = sqrt(fabs(dX[0]*dX[0]+dX[1]*dX[1]+dX[2]*dX[2]));
 	double lmin = toldX / dXnorm2;
 
-	if(l < lmin)
-	{
-		return l; 
-	}  
+	if(l < lmin) return l;
 
-	double X[3] = {Xcurrent[0]+dX[0], Xcurrent[1]+dX[1], Xcurrent[2]+dX[2]};
+	double X[3];
+	bool computeJ = false;
 
-
-	double fcurrent = 0.5*(Fcurrent[0]*Fcurrent[0] + Fcurrent[1]*Fcurrent[1] + Fcurrent[2]*Fcurrent[2]);   // f(Xcurrent)
-	double f = 0.5*fabs(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]);	  											   // f(X_Newton)
+	// f(Xcurrent) and f(X_Newton)
+	double fcurrent = 0.5*(Fcurrent[0]*Fcurrent[0] + Fcurrent[1]*Fcurrent[1] + Fcurrent[2]*Fcurrent[2]);
+	double f = 0.5*fabs(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]);
 
 	double g0 = fcurrent;
+	double g1 = f;
+
 	double gprime0 = 0.0;
-	for(int k = 0; k < n; k++) gprime0 += gradfcurrent[k]*dX[k]; 
-	if(gprime >= 0.0)
-		throw "\nRoundoff issue with gradient descent"; 
-
-
-
+	for(int k = 0; k < n; k++) gprime0 += gradfcurrent[k]*dX[k];
+	if(gprime0 >= 0.0)
+		throw "\nRoundoff issue with gradient descent";
 
 	if(f <= fcurrent + alpha*gprime0)
 	{
-		return l; 
+		return l;	// sufficient decrease of f
 	}
 	else
 	{
-		double l2; 
-		double g2; 
+		double lroot;
+		double lprev;
+		double fprev = f;
+		double a, b, z;
 		do
 		{
-			if(l == 1.0)
+			if(l == 1.0) // quadratic root formula
+				lroot = - gprime0 / (2.0*(g1 - g0 - gprime0));
+			else // cubic root formula
 			{
-				l = - gprime0 / (2.0*(g1 - g0 - gprime0));  // quadratic formula 
-			}
-			else
-			{
-				f2 = f;
-				
-				g2 = f2;
+				a = ((g1-gprime0*l-g0)/(l*l) - (fprev-gprime0*lprev-g0)/(lprev*lprev)) / (l-lprev);
+				b = (-lprev*(g1-gprime0*l-g0)/(l*l) + l*(fprev-gprime0*lprev-g0)/(lprev*lprev)) / (l-lprev);
+
+				if(a == 0.0) // Solve dg/dl = 0 (a = 0)
+					lroot = - gprime0 / (2.0*b);
+				else
+				{
+					z = b*b - 3.0*a*gprime0;
+
+					if(z < 0.0)
+						lroot = 0.5*l;
+					else if(b <= 0.0)
+						lroot = (-b + sqrt(z)) / (3.0*a);
+					else
+						lroot = - gprime0 / (b + sqrt(z));  // ?????
+				}
+				if(lroot > 0.5*l) lroot = 0.5*l;
+
 			}
 
+		// store current values for next iteration
+		lprev = l;
+		fprev = f;
+
+		// update l and f
+		l = fmax(lroot, 0.1*l);
+
+		for(int k = 0; k < n; k++) X[k] = Xcurrent[k] + l*dX[k];
+		computeFandJ(Ea, PTa, PLa, thermal_mass, X, F, J, computeJ);
+
+		f = 0.5*fabs(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]);
+
 		} while(f > fcurrent + alpha*l*gprime0)
-		
 	}
 	return l;
 }
@@ -411,7 +432,7 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 
 		// compute F and J at Xcurrent
 		computeJ = true;
-		computeFandJ(Ea, PTa, PLa, Xcurrent, thermal_mass, F, J, computeJ);
+		computeFandJ(Ea, PTa, PLa, thermal_mass, Xcurrent, F, J, computeJ);
 
     	Fnorm2 = sqrt(fabs(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]));  // L2-norm of F(Xcurrent)
     	//cout << "Fnorm2 = " << Fnorm2 << endl;
@@ -431,7 +452,7 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 
 	    // make
 	    // ./rta &
-	    
+
 
 	    // Solve matrix equation: J * dX = - F
 	    for(int k = 0; k < n; k++) F[k] = - F[k];  // change sign of F first
@@ -445,117 +466,31 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 	    dXnorm2 = sqrt(fabs(dX[0]*dX[0]+dX[1]*dX[1]+dX[2]*dX[2]));
 		if(dXnorm2 > stepmax)
 		{
-			cout << "Newton step is too large" << endl; 
-			for(int k = 0; k < n; k++) dX[k] *= (stepmax/dXnorm); 
+			cout << "Newton step is too large" << endl;
+			for(int k = 0; k < n; k++) dX[k] *= (stepmax/dXnorm);
 		}
 
 	    // Line backtracking algorithm (solve for l)
-
 
 		// default Newton iteration (l = 1)
 		for(int k = 0; k < n; k++) X[k] += dX[k];
 
 		// calculate F(X)
 		computeJ = false;
-		computeFandJ(Ea, PTa, PLa, X, thermal_mass, F, J, computeJ);
-		//f = 0.5*(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]); 
-		
-		// compute l 
-		l = backtrack(Xcurrent, X, dX, Fcurrent, F, gradf, toldX, n);
+		computeFandJ(Ea, PTa, PLa, thermal_mass, X, F, J, computeJ);
+		//f = 0.5*(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]);
 
-
-
-
-
-		// // isn't it better to just calculate l and set the max to 1?
-
-		// // I'm getting ahead of myself right now...stop
-		// if(f < fcurrent)
-		// {
-		// 	l = 1.0;
-		// }
-		// else
-		// {
-
-		// }
-
-
-		// // here I probably need to calculate the new F and check if its norm has decreased
-
-	 //    // check whether or not F (or f?) decreased:
-	 //    // it'll go something like
-	 //    if(f > fold)
-	 //    {
-	 //    	// if 2nd:Nmax Newton fails use cubic g(l) solution
-	 //    	if(i > 0)
-	 //    	{
-	 //    		// work out all details of the cubic solution
-
-	 //    		g0 = F0;
-	 //    		g1 = F1;     // these guys need some work...
-	 //    		g2 = F2;
-	 //    		gprime0 = gradf * dX;
-
-	 //    		a = ((g1-gprime0*l1-g0)/(l1*l1) - (g2-gprime0*l2-g0)/(l2*l2)) / (l1-l2);
-		// 		b = (-l2*(g1-gprime0*l1-g0)/(l1*l1) + l1*(g2-gprime0*l2-g0)/(l2*l2)) / (l1-l2);
-
-		// 		// update current, previous and 2nd previous l's
-		// 		l2 = l1;
-		// 		l1 = l;
-		// 		l = (-b + sqrt(b*b - 3.0*a*gprime0)) / (3.0*a);
-
-		// 		if(l < 0.1*l2) // l1 used in routine stored in l2
-		// 			l = 0.1 * l2;
-		// 		if(l > 0.5*l2)
-		// 			l = 0.5*l2;
-	 //    	}
-	 //    	// if 1st Newton fails use quadratic g(l) solution
-	 //    	else if(i == 0)
-	 //    	{
-	 //    		// work out details of the quadratic solution
-	 //    		g0 = Fold;
-	 //    		g1 = Fnew;
-	 //    		gprime0 = gradf * dX; // these guys need some work
-
-	 //    		// how to update l1, l2?...
-
-
-	 //    		l = - gprime0 / (2.0*(g1 - g0 - gprime0));
-
-	 //    		if(l < 0.1)
-	 //    			l = 0.1;
-	 //    		if(l > 0.5)
-	 //    			l = 0.5;
-	 //    	}
-
-
-	 //    }
-	 //    else if (f < fold)
-	 //    {
-	 //    	 l = 1.0;   // use full Newton step
-	 //    }
-	 //    else if (abs(f-fold) < tolF)
-	 //    {
-	 //    	if(abs(F) > tolF)
-	 //    	{
-	 //    		throw "Hit a local min f\n";
-	 //    	}
-	 //    }
-
-
-
-		 
-
+		// compute l
+		l = linebacktrack(Ea, PTa, PLa, thermal_mass, Xcurrent, X, dX, Fcurrent, F, gradf, J, toldX, n);
 
 	    // redo the update for X_i using l from backtracking
 	    for(int k = 0; k < n; k++) X[k] = Xcurrent[k] + fabs(l)*dX[k];
 
-	    // redo dX calulation also 
+	    // redo dX calulation also
 	    for(int k = 0; k < n; k++) dX[k] *= fabs(l);
 
-	    // redo L2-norm of dX iteration 
+	    // redo |dX| iteration
 	    dXnorm2 = sqrt(fabs(dX[0]*dX[0] + dX[1]*dX[1] + dX[2]*dX[2]));
-
 
 		//cout << "dXnorm2 = " << dXnorm2 << endl;
 
