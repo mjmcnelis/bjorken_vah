@@ -454,6 +454,14 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 	    // ./rta &
 
 
+	    // add the Brodyn method
+
+	    if(i > 0)
+	    {
+	    	/////
+	    }
+
+
 	    // Solve matrix equation: J * dX = - F
 	    for(int k = 0; k < n; k++) F[k] = - F[k];  // change sign of F first
 	    // LU solver routine
