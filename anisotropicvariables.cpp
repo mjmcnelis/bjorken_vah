@@ -280,6 +280,7 @@ void computeFandJ(double Ea, double PTa, double PLa, double thermal_mass, double
 }
 
 
+
 double linebacktrack(double Ea, double PTa, double PLa, double thermal_mass, double Xcurrent[], double dX[], double Fcurrent[], double F[], double gradfcurrent[], double ** J, double toldX, int n)
 {
 	double l = 1.0;          // default value
@@ -288,7 +289,11 @@ double linebacktrack(double Ea, double PTa, double PLa, double thermal_mass, dou
 	double dXnorm2 = sqrt(fabs(dX[0]*dX[0]+dX[1]*dX[1]+dX[2]*dX[2]));
 	double lmin = toldX / dXnorm2;
 
-	if(l < lmin) return l;
+	if(l < lmin)
+	{
+		//cout << "Approaching minimum: ";
+		return l;
+	}
 
 	double X[3];
 	bool computeJ = false;
@@ -307,17 +312,20 @@ double linebacktrack(double Ea, double PTa, double PLa, double thermal_mass, dou
 
 	if(f <= fcurrent + alpha*gprime0)
 	{
+		//cout << "No backtracking.." << endl;
 		return l;	// sufficient decrease of f
 	}
 	else
-	{
+	{	
+		//cout << "Backtracking..";
 		double lroot;
 		double lprev;
 		double fprev = f;
 		double a, b, z;
+		int i = 1; 
 		do
 		{
-			if(l == 1.0) // quadratic root formula
+			if(i == 1) // quadratic root formula
 				lroot = - gprime0 / (2.0*(g1 - g0 - gprime0));
 			else // cubic root formula
 			{
@@ -329,6 +337,8 @@ double linebacktrack(double Ea, double PTa, double PLa, double thermal_mass, dou
 				else
 				{
 					z = b*b - 3.0*a*gprime0;
+
+					// does result change if I used general formula? 
 
 					if(z < 0.0)
 						lroot = 0.5*l;
@@ -351,10 +361,13 @@ double linebacktrack(double Ea, double PTa, double PLa, double thermal_mass, dou
 		for(int k = 0; k < n; k++) X[k] = Xcurrent[k] + l*dX[k];
 		computeFandJ(Ea, PTa, PLa, thermal_mass, X, F, J, computeJ);
 
-		f = 0.5*fabs(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]);
+		f = 0.5*(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]);
 
-		} while(f > fcurrent + alpha*l*gprime0)
+		i++; 
+
+		} while(f > fcurrent + l*alpha*gprime0);
 	}
+	//cout << "l = " << l << endl;
 	return l;
 }
 
@@ -413,7 +426,7 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 
 
 	int i = 0;				  // starting ith iteration
-	int Nmax = 1000;	      // max number of iterations
+	int Nmax = 5000;	      // max number of iterations
 	double dXnorm2;           // L2-norm of dX iteration
 	double Fnorm2;		      // L2-norm of F
 	double toldX = 1.0e-7;    // tolerance for dX
@@ -424,6 +437,7 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 
 	//stepmax calculation
 	stepmax = stepmax*fmax(sqrt(fabs(X[0]*X[0]+X[1]*X[1]+X[2]*X[2])),(double)n);   // no idea what this means...
+	// so far it doesn't seem to be employed really.. 
 
 	// 3D Newton Method with line backtracking
 	do{
@@ -456,10 +470,10 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 
 	    // add the Brodyn method
 
-	    if(i > 0)
-	    {
-	    	/////
-	    }
+	    // if(i > 0)
+	    // {
+	    // 	/////
+	    // }
 
 
 	    // Solve matrix equation: J * dX = - F
@@ -475,7 +489,7 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 		if(dXnorm2 > stepmax)
 		{
 			cout << "Newton step is too large" << endl;
-			for(int k = 0; k < n; k++) dX[k] *= (stepmax/dXnorm);
+			for(int k = 0; k < n; k++) dX[k] *= (stepmax/dXnorm2);
 		}
 
 	    // Line backtracking algorithm (solve for l)
@@ -489,7 +503,7 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 		//f = 0.5*(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]);
 
 		// compute l
-		l = linebacktrack(Ea, PTa, PLa, thermal_mass, Xcurrent, X, dX, Fcurrent, F, gradf, J, toldX, n);
+		l = linebacktrack(Ea, PTa, PLa, thermal_mass, Xcurrent, dX, Fcurrent, F, gradf, J, toldX, n);
 
 	    // redo the update for X_i using l from backtracking
 	    for(int k = 0; k < n; k++) X[k] = Xcurrent[k] + fabs(l)*dX[k];
@@ -542,7 +556,7 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 	}
 	else
 	{
-		throw "Couldn't find anisotropic variables...\n";
+		throw "Iterations exceeded: couldn't find anisotropic variables...\n";
 	}
 
 	// free allocated memory
