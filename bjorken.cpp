@@ -51,6 +51,8 @@ int load_gauss_laguerre_data()
 }
 
 
+//typedef enum {newton, broyden, none} jacobian;
+
 
 
 int main()
@@ -58,6 +60,39 @@ int main()
 	clock_t begin;
     double duration;
     begin = clock();
+
+ //    jacobian jtype = newton; 
+
+ //    try
+ //    {
+	//     switch(jtype)
+	//     {
+	//     	case newton: 
+	//     	{
+	//     		cout << "Using Newton method " << jtype << endl;
+	//     		exit(-1);
+	//     		break;
+	//     	}
+	//     	case broyden:
+	//     	{
+	//     		cout << "Using Broyden method " << jtype << endl;
+	//     		break;
+	//     	}
+	//     	case none:
+	//     	{
+	//     		cout << "Not calculating Jacobian " << jtype << endl;
+	//     		break;
+	//     	}
+	//     	default:
+	//     		throw "please specify jacobian type\n";
+	//     }
+	// }
+	// catch (char const *excp)
+	// {
+	// 	cout << "\nRoot method error: " << excp;
+	// 	exit(-1); 
+	// }
+
 
  //    int num_error;
 	// // Load gauss laguerre roots-weights
@@ -162,8 +197,8 @@ int main()
 	double PT = (3.0/(2.0+PLPTratio)) * e / 3.0;
 	double PL = (3.0 - 6.0/(2.0+PLPTratio)) * e / 3.0;
 
-	//PT = p;
-	//PL = p; 
+	PT = p;
+	PL = p; 
 
 
 	// double dB2nd = -3.0*taubulk*mdmdT_Quasiparticle(T)/pow(z_Quasiparticle(T),2)*speedOfSoundSquared(e)*(2.0*PT/3.0+PL/3.0-p)/(t0*T);
@@ -178,11 +213,11 @@ int main()
 	double dBasy = -3.0*taubulk*mdmde_Quasiparticle(e)*(e+PL)*(2.0*PT/3.0+PL/3.0-p)/(t0*m*m) /
 			(1.0 + 4.0*taubulk*mdmde_Quasiparticle(e)*(e+PL)/(t0*m*m));
 
-	double B = 0.142*(Beq + dBasy);
+	//double B = 0.142*(Beq + dBasy);
 
 
 
-	//double B = 1.0*(Beq + dBasy);
+	double B = 1.0*(Beq + dBasy);
 
 	//cout << (2.0*PT/3.0+PL/3.0-p) << endl;
 	//cout << B - Beq << endl;
@@ -210,7 +245,7 @@ int main()
     double ax0 = ax;
     double az0 = az;
 
-    cout << "\n\n PL/PT = " << PL/PT << endl;
+    cout << "\n\nPL/PT = " << PL/PT << endl;
 
 	cout << "\nlambda = " << lambda0 << ";" << endl;
 	cout << "ax = " << ax0 << ";" << endl;
@@ -443,7 +478,7 @@ int main()
 
 
 
-	printf("...done\n\n");
+	printf("\n...done\n\n");
 
 
 	duration = (clock() - begin) / (double)CLOCKS_PER_SEC;
