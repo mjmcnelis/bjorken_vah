@@ -176,9 +176,10 @@ void free_2D(double ** M, int n)
 
 
 
-
-void calcFJ(double Ea, double PTa, double PLa, double thermal_mass, double X[], double dX[], double * F, double Fcurrent[], double ** J, double ** Jcurrent, jacobian jtype, int n)
+void calcF(double Ea, double PTa, double PLa, double thermal_mass, double X[], double * F, int n)
 {
+	if(n != 3) throw "check variable dimension\n";
+
 	// anisotropic variables
 	double lambda = X[0];
 	double ax = X[1];
@@ -191,56 +192,74 @@ void calcFJ(double Ea, double PTa, double PLa, double thermal_mass, double X[], 
 
 	double pbar_weightF[pbar_pts] = {0.00825033790777967,0.0671033262747106,0.206386098255352,0.368179392999486,0.446389764546666,0.397211321904435,0.270703020914857,0.144937243765141,0.0619302157291065,0.0213227539141068,0.00594841159169929,0.00134795257769464,0.000248166548996264,3.7053223540482e-05,4.47057760459712e-06,4.33555258401213e-07,3.35571417159735e-08,2.05432200435071e-09,9.83646900727572e-11,3.63364388210833e-12,1.01834576904109e-13,2.12110313498633e-15,3.20100105319804e-17,3.39007439648141e-19,2.41904571899768e-21,1.10270714408855e-23,2.98827103874582e-26,4.34972188455989e-29,2.92108431650778e-32,7.0533942409897e-36,3.81617106981223e-40,1.39864930768275e-45};
 
-	const double g = 51.4103536012791;            // degeneracy factor g (nf = 3 flavors)
+	double g = 51.4103536012791;            // degeneracy factor
 
-	double mbar = thermal_mass / lambda;          // mbar = m(T) / lambda
+	double mbar = thermal_mass / lambda;    // m(T) / lambda
 
-	// Evaluate factors and prefactors for the F/J elements
-  	double lambda2 =  lambda * lambda;
-  	double lambda3 = lambda2 * lambda;
+	// Evaluate prefactors
+  	double lambda4 =  lambda * lambda * lambda * lambda;
   	double ax2 = ax * ax;
   	double az2 = az * az;
-  	double lambdaax3 = lambda * ax2 * ax;
-  	double lambdaaz3 = lambda * az2 * az;
+  	double commonfactor = g * ax2 * az * lambda4 / (4.0*M_PI*M_PI);
 
-  	double commonfactor = g * ax2 * az * lambda2 / (4.0*M_PI*M_PI);
-
-  	// calculate F
-	double factorEa = commonfactor * lambda2;
-    double factorPTa = commonfactor * ax2 * lambda2 / 2.0;
-    double factorPLa = commonfactor * az2 * lambda2;
+	// calculate F
+	double factorEa = commonfactor;
+    double factorPTa = 0.5 * commonfactor * ax2;
+    double factorPLa = commonfactor * az2;
 
     double Eai = factorEa * Gauss_Aniso_1D(Ea_integrand, pbar_rootF, pbar_weightF, pbar_pts, ax, az, mbar);
 	double PTai = factorPTa * Gauss_Aniso_1D(PTa_integrand, pbar_rootF, pbar_weightF, pbar_pts, ax, az, mbar);
 	double PLai = factorPLa * Gauss_Aniso_1D(PLa_integrand, pbar_rootF, pbar_weightF, pbar_pts, ax, az, mbar);
 
-	////////////////////////////
-    //                        //
-    //   F  =  Eai - Ea       //
-    //         PTai - PTa     //
-    //         PLai - PLa     //
-    //                        //
-    ////////////////////////////
-
 	F[0] = Eai - Ea;
 	F[1] = PTai - PTa;
 	F[2] = PLai - PLa;
+	
+}
 
 
+void calcJ(double Ea, double PTa, double PLa, double thermal_mass, double X[], double dX[], double F[], double Fcurrent[], double ** J, double ** Jcurrent, jacobian jtype, int n)
+{
+	if(n != 3) throw "check variable dimension\n";
+	
     switch(jtype)
     {
     	case newton:
     	{
-    		// Newton Method
-    		double pbar_rootJ[pbar_pts] = {0.299618729049241,0.701981065353977,1.24974569814569,1.94514382443706,2.78994869155499,3.78614305529879,4.93605293430173,6.24240692441721,7.70838362900271,9.3376617765878,11.1344784990019,13.1036993239838,15.2509033992287,17.5824881879873,20.1057991514724,22.8292918399089,25.7627366009885,28.9174802233293,32.3067850039226,35.9462752181738,39.8545359681502,44.0539338428991,48.5717701879893,53.4419507581545,58.7074908793654,64.4244418290391,70.6683893377061,77.5459900633602,85.2174664086695,93.9467116599065,104.238552969691,117.391742318923};
+    		// Newton Jacobian 
+
+    		// anisotropic variables
+			double lambda = X[0];
+			double ax = X[1];
+			double az = X[2];
+
+			const int pbar_pts = 32;
+
+			double pbar_rootJ[pbar_pts] = {0.299618729049241,0.701981065353977,1.24974569814569,1.94514382443706,2.78994869155499,3.78614305529879,4.93605293430173,6.24240692441721,7.70838362900271,9.3376617765878,11.1344784990019,13.1036993239838,15.2509033992287,17.5824881879873,20.1057991514724,22.8292918399089,25.7627366009885,28.9174802233293,32.3067850039226,35.9462752181738,39.8545359681502,44.0539338428991,48.5717701879893,53.4419507581545,58.7074908793654,64.4244418290391,70.6683893377061,77.5459900633602,85.2174664086695,93.9467116599065,104.238552969691,117.391742318923};
 
 			double pbar_weightJ[pbar_pts] = {0.00660146448073508,0.0813584931042281,0.347537436309438,0.809963198105261,1.22739584119905,1.32050782861975,1.06049919505728,0.655616488144915,0.318173017008472,0.122743109012855,0.0379333897858022,0.00943187028689987,0.00188978713293874,0.000304914974586437,3.95130877631855e-05,4.09377958251348e-06,3.36921618654073e-07,2.1841295448875e-08,1.10337736506627e-09,4.28638379146177e-11,1.25966453444067e-12,2.74423030367617e-14,4.32175197361363e-16,4.76686817705967e-18,3.53643350342934e-20,1.67355018349782e-22,4.70254099995936e-25,7.09116556196869e-28,4.93082516196282e-31,1.23284946609868e-34,6.91389702736573e-39,2.63586492716958e-44};
+
+			double g = 51.4103536012791;          
+
+			double mbar = thermal_mass / lambda;          
+
+		  	double lambda2 =  lambda * lambda;
+		  	double lambda3 = lambda2 * lambda;
+		  	double ax2 = ax * ax;
+		  	double az2 = az * az;
+		  	double lambdaax3 = lambda * ax2 * ax;
+		  	double lambdaaz3 = lambda * az2 * az;
+
+		  	double commonfactor = g * ax2 * az * lambda2 / (4.0*M_PI*M_PI);
+
+    		// calculate Eai,PTai,PLai from F
+			double Eai = F[0] + Ea;
+			double PTai = F[1] + PTa; 
+			double PLai = F[2] + PLa; 
 
 	    	double factorI2001 = commonfactor * lambda3;
 		    double factorI2011 = commonfactor * ax2 * lambda3 / 2.0;
 			double factorI2201 = commonfactor * az2 * lambda3;
-			// double factorI401m1 = factorI2011;
-			// double factorI420m1 = factorI2201;
 			double factorI402m1 = commonfactor * ax2 * ax2 * lambda3 / 8.0;
 			double factorI421m1 = commonfactor * ax2 * az2 * lambda3 / 2.0;
 			double factorI440m1 = commonfactor * az2 * az2 * lambda3;
@@ -248,42 +267,27 @@ void calcFJ(double Ea, double PTa, double PLa, double thermal_mass, double X[], 
 			double I2001 = factorI2001 * Gauss_Aniso_1D(I2001_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, ax, az, mbar);
 		    double I2011 = factorI2011 * Gauss_Aniso_1D(I2011_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, ax, az, mbar);
 		    double I2201 = factorI2201 * Gauss_Aniso_1D(I2201_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, ax, az, mbar);
-		    // double I401m1 = factorI401m1 * Gauss_Aniso_1D(I401m1_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, ax, az, mbar);
-		    // double I420m1 = factorI420m1 * Gauss_Aniso_1D(I420m1_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, ax, az, mbar);
 		    double I402m1 = factorI402m1 * Gauss_Aniso_1D(I402m1_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, ax, az, mbar);
 		    double I421m1 = factorI421m1 * Gauss_Aniso_1D(I421m1_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, ax, az, mbar);
 		    double I440m1 = factorI440m1 * Gauss_Aniso_1D(I440m1_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, ax, az, mbar);
 
-		    //////////////////////////////////////////////////////////////////////////////
-		    //                                                                          //
-		    //    J  =  I2001/lambda2   2*I401m1/lambda/ax3    I420m1/lambda/az3        //
-		    //                                                                          //
-		    //          I2011/lambda2   4*I402m1/lambda/ax3    I421m1/lambda/az3        //
-		    //                                                                          //
-		    //          I2201/lambda2   2*I421m1/lambda/ax3    I440m1/lambda/az3        //
-		    //                                                                          //
-		    //////////////////////////////////////////////////////////////////////////////
+		    J[0][0] = I2001/lambda2;	  J[1][0] = I2011/lambda2;		   J[2][0] = I2201/lambda2;
+		    J[0][1] = 2.0*(Eai+PTai)/ax;  J[1][1] = 4.0*I402m1/lambdaax3;  J[2][1] = 2.0*I421m1/lambdaax3;
+		    J[0][2] = (Eai+PLai)/az;	  J[1][2] = I421m1/lambdaaz3;      J[2][2] = I440m1 / lambdaaz3;
 
-		    // row 1
-		    J[0][0] = I2001/lambda2;
+		    // double factorI401m1 = factorI2011;
+			// double factorI420m1 = factorI2201;
+			// double I401m1 = factorI401m1 * Gauss_Aniso_1D(I401m1_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, ax, az, mbar);
+		    // double I420m1 = factorI420m1 * Gauss_Aniso_1D(I420m1_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, ax, az, mbar);
 		    //J[0][2] = I420m1 / lambdaaz3;
 		    //J[0][1] = 2.0 * I401m1 / lambdaiaxi3;
-		    J[0][1] = 2.0*(Eai+PTai)/ax;
-		    J[0][2] = (Eai+PLai)/az;
-		    // row 2
-		    J[1][0] = I2011/lambda2;
-		    J[1][1] = 4.0 * I402m1 / lambdaax3;
-		    J[1][2] = I421m1 / lambdaaz3;
-		    // row 3
-		    J[2][0] = I2201/lambda2;
-		    J[2][1] = 2.0 * I421m1 / lambdaax3;
-		    J[2][2] = I440m1 / lambdaaz3;
 
     		break;
     	}
     	case broyden:
     	{
-    		// Broyden's method
+    		// Broyden Jacobian 
+
     		double dXabs = sqrt(dX[0]*dX[0]+dX[1]*dX[1]+dX[2]*dX[2]);
     		double dX_unit[3] = {0.0,0.0,0.0};
     		double Jcurrent_dX[3] = {0.0,0.0,0.0};
@@ -291,53 +295,37 @@ void calcFJ(double Ea, double PTa, double PLa, double thermal_mass, double X[], 
     		for(int i = 0; i < n; i++)
 			{
 				dX_unit[i] = dX[i] / dXabs;
-
-				for(int k = 0; k < n; k++)
-				{
-					Jcurrent_dX[i] += Jcurrent[i][k]*dX[k];
-				}
+				for(int k = 0; k < n; k++) Jcurrent_dX[i] += Jcurrent[i][k]*dX[k];
 			}
     		for(int i = 0; i < n; i++)
-    		{
     			for(int j = 0; j < n; j++)
-    			{
     				J[i][j] = Jcurrent[i][j] + (F[i] - Fcurrent[i] - Jcurrent_dX[i]) * dX_unit[j] / dXabs;
     				// do I get any numerical error from this?
-    			}
-    		}
-    		break;
-    	}
-    	case none:
-    	{
-    		// No calculation of Jacobian required here
     		break;
     	}
     	default:
-    		throw "please specify jacobian type\n";
+    		throw "specify method for J\n";
     }
 }
 
 
 
-double linebacktrack(double Ea, double PTa, double PLa, double thermal_mass, double Xcurrent[], double dX[], double Fcurrent[], double F[], double gradfcurrent[], double ** J, double ** Jcurrent, double toldX, int n)
+double linebacktrack(double F[], double Ea, double PTa, double PLa, double thermal_mass, double Xcurrent[], double dX[], double gradfcurrent[], double fcurrent, double toldX, int n)
 {
-	double l = 1.0;          // default value
+	if(n != 3) throw "check variable dimension\n";
+
+	//*l = 1.0;                // default value
+	//double lstar = *l;		 // temperory holder for l 
+	double lstar = 1.0;		 // temperory holder for l 
 	double alpha = 0.0001;   // constant for sufficient decrease of f
 
 	double dXabs = sqrt(fabs(dX[0]*dX[0]+dX[1]*dX[1]+dX[2]*dX[2]));
 	double lmin = toldX / dXabs;
 
-	if(l < lmin)
-	{
-		//cout << "Approaching minimum: ";
-		return l;
-	}
+	if(lstar < lmin) return lstar; 
 
 	double X[3];
-	jacobian jtype = none;
 
-	// f(Xcurrent) and f(X_Newton)
-	double fcurrent = 0.5*(Fcurrent[0]*Fcurrent[0] + Fcurrent[1]*Fcurrent[1] + Fcurrent[2]*Fcurrent[2]);
 	double f = 0.5*fabs(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]);
 
 	double g0 = fcurrent;
@@ -349,7 +337,7 @@ double linebacktrack(double Ea, double PTa, double PLa, double thermal_mass, dou
 
 	if(f <= fcurrent + alpha*gprime0)
 	{
-		return l;	// sufficient decrease of f
+		return lstar;	// sufficient decrease of f
 	}
 	else
 	{
@@ -364,8 +352,8 @@ double linebacktrack(double Ea, double PTa, double PLa, double thermal_mass, dou
 				lroot = - gprime0 / (2.0*(g1 - g0 - gprime0));
 			else // cubic root formula
 			{
-				a = ((g1-gprime0*l-g0)/(l*l) - (fprev-gprime0*lprev-g0)/(lprev*lprev)) / (l-lprev);
-				b = (-lprev*(g1-gprime0*l-g0)/(l*l) + l*(fprev-gprime0*lprev-g0)/(lprev*lprev)) / (l-lprev);
+				a = ((g1-gprime0*lstar-g0)/(lstar*lstar) - (fprev-gprime0*lprev-g0)/(lprev*lprev)) / (lstar-lprev);
+				b = (-lprev*(g1-gprime0*lstar-g0)/(lstar*lstar) + lstar*(fprev-gprime0*lprev-g0)/(lprev*lprev)) / (lstar-lprev);
 
 				if(a == 0.0) // Solve dg/dl = 0 (a = 0)
 					lroot = - gprime0 / (2.0*b);
@@ -374,7 +362,7 @@ double linebacktrack(double Ea, double PTa, double PLa, double thermal_mass, dou
 					z = b*b - 3.0*a*gprime0;
 
 					if(z < 0.0)
-						lroot = 0.5*l;
+						lroot = 0.5*lstar;
 					else
 						lroot = (-b + sqrt(z)) / (3.0*a);
 
@@ -387,19 +375,20 @@ double linebacktrack(double Ea, double PTa, double PLa, double thermal_mass, dou
 					// else
 					// 	lroot = - gprime0 / (b + sqrt(z));  // ?????
 				}
-				if(lroot > 0.5*l) lroot = 0.5*l;
+				if(lroot > 0.5*lstar) lroot = 0.5*lstar;
 
 			}
 
 		// store current values for next iteration
-		lprev = l;
+		lprev = lstar;
 		fprev = f;
 
 		// update l and f
-		l = fmax(lroot, 0.1*l);
+		lstar = fmax(lroot, 0.1*lstar);
 
-		for(int k = 0; k < n; k++) X[k] = Xcurrent[k] + l*dX[k];
-		calcFJ(Ea, PTa, PLa, thermal_mass, X, dX, F, Fcurrent, J, Jcurrent, jtype, n);
+		for(int k = 0; k < n; k++) X[k] = Xcurrent[k] + lstar*dX[k];
+		//calcFJ(Ea, PTa, PLa, thermal_mass, X, dX, F, Fcurrent, J, Jcurrent, jtype, n);
+		calcF(Ea, PTa, PLa, thermal_mass, X, F, n);
 
 		f = 0.5*(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]);
 
@@ -407,10 +396,12 @@ double linebacktrack(double Ea, double PTa, double PLa, double thermal_mass, dou
 
 		// while loop should eventually terminate if l -> 0
 
-		} while(f > fcurrent + l*alpha*gprime0);
+		} while(f > fcurrent + lstar*alpha*gprime0);
 	}
 	//cout << "l = " << l << endl;
-	return l;
+	//*l = lstar; 
+
+	return lstar;
 }
 
 
@@ -471,8 +462,6 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
  		Jcurrent[k] = (double *) malloc(n* sizeof(double));
  	}
 
-
-	int i = 0;				  // starting ith iteration
 	int Nmax = 5000;	      // max number of iterations
 	jacobian jtype;  		  // jacobian type
 	double dXabs;             // magnitude of dX
@@ -490,18 +479,46 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 
 
 	// 3D Newton method with line backtracking
-	do{
+	for(int i = 0; i < Nmax; i++)
+	{
+		// set l to default value
+		l = 1.0;
+
+		// perform the Newton iteration at least
+		// once before checking for convergence 
+		if(i > 0) 
+		{
+			if(dXabs <= toldX & Fabs <= tolF)
+			{
+				*lambda = X[0];
+				*ax = X[1];
+				*az = X[2];
+				return;
+			}
+		}
+
 		// store current solution
 		for(int k = 0; k < n; k++) Xcurrent[k] = X[k];
 
 
 		// starting Jacobian method
-	    if(i == 0) jtype = newton;
-	    else if(i > 0) jtype = broyden;
+	    if(i == 0)
+	    {
+	    	jtype = newton;
+	    	calcF(Ea, PTa, PLa, thermal_mass, X, F, n);
+			calcJ(Ea, PTa, PLa, thermal_mass, X, dX, F, Fcurrent, J, Jcurrent, jtype, n);
+	    }
+	    else if(i > 0)
+    	{
+    		jtype = broyden;
+			calcJ(Ea, PTa, PLa, thermal_mass, X, dX, F, Fcurrent, J, Jcurrent, jtype, n);
+    	}
 
 
-	    // compute F and default J at Xcurrent
-		calcFJ(Ea, PTa, PLa, thermal_mass, Xcurrent, dX, F, Fcurrent, J, Jcurrent, jtype, n);
+	    // compute F and default J at X = Xcurrent
+	 //    if(i == 0)
+		// calcF(Ea, PTa, PLa, thermal_mass, X, F, n);
+		// calcJ(Ea, PTa, PLa, thermal_mass, X, dX, F, Fcurrent, J, Jcurrent, jtype, n);
 
 
 		// store current F and default J
@@ -513,14 +530,14 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 
 
     	// magnitude of F at Xcurrent
-    	Fabs = sqrt(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]);
-	    fcurrent = 0.5*Fabs*Fabs;
+    	Fabs = sqrt(F[0]+F[0] + F[1]*F[1] + F[2]*F[2]); 
+	    fcurrent = 0.5*(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]);
 
 
 	    // gradient of f at Xcurrent
 	    for(int k = 0; k < n; k++)
 	    {
-	    	gradf_sum = 0.0; // clear sum
+	    	gradf_sum = 0.0;       // clear sum
 	    	for(int m = 0; m < n; m++) gradf_sum += F[m] * J[m][k];
 	    	gradf[k] = gradf_sum;  // gradf_k = F_m * J_mk
 	    }
@@ -555,11 +572,15 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 				if(gprime0 >= 0.0) throw "error in newton gradient descent\n";
 			case broyden:
 			{
-				//if(gprime0 >= 0.0) throw "error in broyden gradient descent\n";
+				// if(gprime0 >= 0.0)
+				// {
+				// 	printf("At iteration %i",i);
+				// 	throw "error in broyden gradient descent\n";
+				// }
 				break;
 			}
 			default:
-				throw "please specify jacobian type 2\n";
+				throw "specify descent method\n";
 		}
 
 
@@ -568,7 +589,7 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 
 
 		// F vector and magnitude at X
-		calcFJ(Ea, PTa, PLa, thermal_mass, X, dX, F, Fcurrent, J, Jcurrent, none, n);
+		calcF(Ea, PTa, PLa, thermal_mass, X, F, n);
 		f = 0.5*(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]);
 
 		//cout << jtype << endl;
@@ -578,7 +599,7 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 			case newton:
 			{
 				// Line backtracking algorithm (solve for l)
-				l = linebacktrack(Ea, PTa, PLa, thermal_mass, Xcurrent, dX, Fcurrent, F, gradf, J, Jcurrent, toldX, n);
+				l = linebacktrack(F, Ea, PTa, PLa, thermal_mass, Xcurrent, dX, gradf, fcurrent, toldX, n);
 				break;
 			}
 			case broyden:
@@ -589,17 +610,15 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 				{
 					//cout << "Switch to Newton at " << i << "\n";
 
-					jtype = newton;
-
 					// reset X,F
 					for(int k = 0; k < n; k++) X[k] = Xcurrent[k];
 			    	for(int k = 0; k < n; k++) F[k] = Fcurrent[k];
 
-			    	// recalculate J
-			    	calcFJ(Ea, PTa, PLa, thermal_mass, Xcurrent, dX, F, Fcurrent, J, Jcurrent, jtype, n);
+			    	// reinitialize J as exact 
+			    	calcJ(Ea, PTa, PLa, thermal_mass, Xcurrent, dX, F, Fcurrent, J, Jcurrent, newton, n);
 
 
-			    	// store the new J
+			    	// store J
 			    	for(int k = 0; k < n; k++)
 			    	{
 			    		for(int j = 0; j < n; j++) Jcurrent[k][j] = J[k][j];
@@ -621,17 +640,16 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 				    dXabs = sqrt(dX[0]*dX[0]+dX[1]*dX[1]+dX[2]*dX[2]);
 					if(dXabs > stepmax)
 					{
-						cout << "Newton step is too large" << endl;
+						//cout << "Newton step is too large" << endl;
 						for(int k = 0; k < n; k++) dX[k] *= (stepmax/dXabs);
 					}
 
 					for(int k = 0; k < n; k++) X[k] += dX[k];
 
-					jtype = none;
 					// recalculate F at X
-					calcFJ(Ea, PTa, PLa, thermal_mass, X, dX, F, Fcurrent, J, Jcurrent, jtype, n);
+					calcF(Ea, PTa, PLa, thermal_mass, X, F, n);
 
-					l = linebacktrack(Ea, PTa, PLa, thermal_mass, Xcurrent, dX, Fcurrent, F, gradf, J, Jcurrent, toldX, n);
+					l = linebacktrack(F, Ea, PTa, PLa, thermal_mass, Xcurrent, dX, gradf, fcurrent, toldX, n);
 				}
 				else
 				{
@@ -643,8 +661,8 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 				// }
 				break;
 			}
-			case none:
-				throw "please specify jacobian type 3\n";
+			default:
+				throw "correct line backtracking routine\n";
 		}
 
 
@@ -654,13 +672,13 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 	    // redo dX calulation also
 	    for(int k = 0; k < n; k++) dX[k] *= fabs(l);
 
-	    // redo |dX| iteration
-	    dXabs = sqrt(fabs(dX[0]*dX[0] + dX[1]*dX[1] + dX[2]*dX[2]));
+	    // redo |dX| and |F| 
+	    dXabs = sqrt(dX[0]*dX[0] + dX[1]*dX[1] + dX[2]*dX[2]);
+		//Fabs = sqrt(F[0]+F[0] + F[1]*F[1] + F[2]*F[2]); 
 
-		// reset l to default value
-		l = 1.0;
+		
 
-		i++;
+		//i++;
 
 		if(X[0] < 0.0)
 		{
@@ -678,23 +696,24 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
     		throw "az is negative\n";
     	}
 
-	}while(((dXabs > toldX) || (Fabs > tolF)) && (i < Nmax));
+	//}while(((dXabs > toldX) || (Fabs > tolF)) && (i < Nmax));
 
+    	if(i == Nmax -1) throw "Iterations exceeded, couldn't find anisotropic variables...\n";
+    }
 
-
-	if(i < Nmax)
-	{
-		// final answer
-		*lambda = Xcurrent[0];
-		*ax = Xcurrent[1];
-		*az = Xcurrent[2];
-		//cout << i << " ";
-		return;
-	}
-	else
-	{
-		throw "Iterations exceeded: couldn't find anisotropic variables...\n";
-	}
+	// if(i < Nmax)
+	// {
+	// 	// final answer
+	// 	*lambda = Xcurrent[0];
+	// 	*ax = Xcurrent[1];
+	// 	*az = Xcurrent[2];
+	// 	//cout << i << " ";
+	// 	return;
+	// }
+	// else
+	// {
+	// 	throw "Iterations exceeded: couldn't find anisotropic variables...\n";
+	// }
 
 	// free allocated memory
 

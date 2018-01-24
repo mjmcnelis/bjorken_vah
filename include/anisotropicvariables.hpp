@@ -6,7 +6,7 @@
 #define ANISOTROPICVARIABLES_H
 
 
-typedef enum {newton, broyden, none} jacobian;
+typedef enum {newton, broyden} jacobian;
 
 void get_anisotropic_variables(double e, double pl, double pt, double B, double *lambda, double *ax, double *az);
 
