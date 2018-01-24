@@ -61,13 +61,13 @@ int main()
     double duration;
     begin = clock();
 
- //    jacobian jtype = newton; 
+ //    jacobian jtype = newton;
 
  //    try
  //    {
 	//     switch(jtype)
 	//     {
-	//     	case newton: 
+	//     	case newton:
 	//     	{
 	//     		cout << "Using Newton method " << jtype << endl;
 	//     		exit(-1);
@@ -90,7 +90,7 @@ int main()
 	// catch (char const *excp)
 	// {
 	// 	cout << "\nRoot method error: " << excp;
-	// 	exit(-1); 
+	// 	exit(-1);
 	// }
 
 
@@ -197,8 +197,8 @@ int main()
 	double PT = (3.0/(2.0+PLPTratio)) * e / 3.0;
 	double PL = (3.0 - 6.0/(2.0+PLPTratio)) * e / 3.0;
 
-	PT = p;
-	PL = p; 
+	//PT = p;
+	//PL = p;
 
 
 	// double dB2nd = -3.0*taubulk*mdmdT_Quasiparticle(T)/pow(z_Quasiparticle(T),2)*speedOfSoundSquared(e)*(2.0*PT/3.0+PL/3.0-p)/(t0*T);
@@ -213,11 +213,11 @@ int main()
 	double dBasy = -3.0*taubulk*mdmde_Quasiparticle(e)*(e+PL)*(2.0*PT/3.0+PL/3.0-p)/(t0*m*m) /
 			(1.0 + 4.0*taubulk*mdmde_Quasiparticle(e)*(e+PL)/(t0*m*m));
 
-	//double B = 0.142*(Beq + dBasy);
+	double B = 0.142*(Beq + dBasy);
 
 
 
-	double B = 1.0*(Beq + dBasy);
+	//double B = 1.0*(Beq + dBasy);
 
 	//cout << (2.0*PT/3.0+PL/3.0-p) << endl;
 	//cout << B - Beq << endl;

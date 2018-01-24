@@ -227,105 +227,94 @@ void calcFJ(double Ea, double PTa, double PLa, double thermal_mass, double X[], 
 	F[2] = PLai - PLa;
 
 
-	try
-	{
-	    switch(jtype)
-	    {
-	    	case newton: 
-	    	{
-	    		//cout << "Using Newton method " << jtype << endl;
-	    		double pbar_rootJ[pbar_pts] = {0.299618729049241,0.701981065353977,1.24974569814569,1.94514382443706,2.78994869155499,3.78614305529879,4.93605293430173,6.24240692441721,7.70838362900271,9.3376617765878,11.1344784990019,13.1036993239838,15.2509033992287,17.5824881879873,20.1057991514724,22.8292918399089,25.7627366009885,28.9174802233293,32.3067850039226,35.9462752181738,39.8545359681502,44.0539338428991,48.5717701879893,53.4419507581545,58.7074908793654,64.4244418290391,70.6683893377061,77.5459900633602,85.2174664086695,93.9467116599065,104.238552969691,117.391742318923};
+    switch(jtype)
+    {
+    	case newton:
+    	{
+    		// Newton Method
+    		double pbar_rootJ[pbar_pts] = {0.299618729049241,0.701981065353977,1.24974569814569,1.94514382443706,2.78994869155499,3.78614305529879,4.93605293430173,6.24240692441721,7.70838362900271,9.3376617765878,11.1344784990019,13.1036993239838,15.2509033992287,17.5824881879873,20.1057991514724,22.8292918399089,25.7627366009885,28.9174802233293,32.3067850039226,35.9462752181738,39.8545359681502,44.0539338428991,48.5717701879893,53.4419507581545,58.7074908793654,64.4244418290391,70.6683893377061,77.5459900633602,85.2174664086695,93.9467116599065,104.238552969691,117.391742318923};
 
-				double pbar_weightJ[pbar_pts] = {0.00660146448073508,0.0813584931042281,0.347537436309438,0.809963198105261,1.22739584119905,1.32050782861975,1.06049919505728,0.655616488144915,0.318173017008472,0.122743109012855,0.0379333897858022,0.00943187028689987,0.00188978713293874,0.000304914974586437,3.95130877631855e-05,4.09377958251348e-06,3.36921618654073e-07,2.1841295448875e-08,1.10337736506627e-09,4.28638379146177e-11,1.25966453444067e-12,2.74423030367617e-14,4.32175197361363e-16,4.76686817705967e-18,3.53643350342934e-20,1.67355018349782e-22,4.70254099995936e-25,7.09116556196869e-28,4.93082516196282e-31,1.23284946609868e-34,6.91389702736573e-39,2.63586492716958e-44};
+			double pbar_weightJ[pbar_pts] = {0.00660146448073508,0.0813584931042281,0.347537436309438,0.809963198105261,1.22739584119905,1.32050782861975,1.06049919505728,0.655616488144915,0.318173017008472,0.122743109012855,0.0379333897858022,0.00943187028689987,0.00188978713293874,0.000304914974586437,3.95130877631855e-05,4.09377958251348e-06,3.36921618654073e-07,2.1841295448875e-08,1.10337736506627e-09,4.28638379146177e-11,1.25966453444067e-12,2.74423030367617e-14,4.32175197361363e-16,4.76686817705967e-18,3.53643350342934e-20,1.67355018349782e-22,4.70254099995936e-25,7.09116556196869e-28,4.93082516196282e-31,1.23284946609868e-34,6.91389702736573e-39,2.63586492716958e-44};
 
-		    	double factorI2001 = commonfactor * lambda3;
-			    double factorI2011 = commonfactor * ax2 * lambda3 / 2.0;
-				double factorI2201 = commonfactor * az2 * lambda3;
-				// double factorI401m1 = factorI2011;
-				// double factorI420m1 = factorI2201;
-				double factorI402m1 = commonfactor * ax2 * ax2 * lambda3 / 8.0;
-				double factorI421m1 = commonfactor * ax2 * az2 * lambda3 / 2.0;
-				double factorI440m1 = commonfactor * az2 * az2 * lambda3;
+	    	double factorI2001 = commonfactor * lambda3;
+		    double factorI2011 = commonfactor * ax2 * lambda3 / 2.0;
+			double factorI2201 = commonfactor * az2 * lambda3;
+			// double factorI401m1 = factorI2011;
+			// double factorI420m1 = factorI2201;
+			double factorI402m1 = commonfactor * ax2 * ax2 * lambda3 / 8.0;
+			double factorI421m1 = commonfactor * ax2 * az2 * lambda3 / 2.0;
+			double factorI440m1 = commonfactor * az2 * az2 * lambda3;
 
-				double I2001 = factorI2001 * Gauss_Aniso_1D(I2001_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, ax, az, mbar);
-			    double I2011 = factorI2011 * Gauss_Aniso_1D(I2011_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, ax, az, mbar);
-			    double I2201 = factorI2201 * Gauss_Aniso_1D(I2201_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, ax, az, mbar);
-			    // double I401m1 = factorI401m1 * Gauss_Aniso_1D(I401m1_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, ax, az, mbar);
-			    // double I420m1 = factorI420m1 * Gauss_Aniso_1D(I420m1_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, ax, az, mbar);
-			    double I402m1 = factorI402m1 * Gauss_Aniso_1D(I402m1_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, ax, az, mbar);
-			    double I421m1 = factorI421m1 * Gauss_Aniso_1D(I421m1_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, ax, az, mbar);
-			    double I440m1 = factorI440m1 * Gauss_Aniso_1D(I440m1_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, ax, az, mbar);
+			double I2001 = factorI2001 * Gauss_Aniso_1D(I2001_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, ax, az, mbar);
+		    double I2011 = factorI2011 * Gauss_Aniso_1D(I2011_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, ax, az, mbar);
+		    double I2201 = factorI2201 * Gauss_Aniso_1D(I2201_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, ax, az, mbar);
+		    // double I401m1 = factorI401m1 * Gauss_Aniso_1D(I401m1_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, ax, az, mbar);
+		    // double I420m1 = factorI420m1 * Gauss_Aniso_1D(I420m1_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, ax, az, mbar);
+		    double I402m1 = factorI402m1 * Gauss_Aniso_1D(I402m1_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, ax, az, mbar);
+		    double I421m1 = factorI421m1 * Gauss_Aniso_1D(I421m1_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, ax, az, mbar);
+		    double I440m1 = factorI440m1 * Gauss_Aniso_1D(I440m1_integrand, pbar_rootJ, pbar_weightJ, pbar_pts, ax, az, mbar);
 
-			    //////////////////////////////////////////////////////////////////////////////
-			    //                                                                          //
-			    //    J  =  I2001/lambda2   2*I401m1/lambda/ax3    I420m1/lambda/az3        //
-			    //                                                                          //
-			    //          I2011/lambda2   4*I402m1/lambda/ax3    I421m1/lambda/az3        //
-			    //                                                                          //
-			    //          I2201/lambda2   2*I421m1/lambda/ax3    I440m1/lambda/az3        //
-			    //                                                                          //
-			    //////////////////////////////////////////////////////////////////////////////
+		    //////////////////////////////////////////////////////////////////////////////
+		    //                                                                          //
+		    //    J  =  I2001/lambda2   2*I401m1/lambda/ax3    I420m1/lambda/az3        //
+		    //                                                                          //
+		    //          I2011/lambda2   4*I402m1/lambda/ax3    I421m1/lambda/az3        //
+		    //                                                                          //
+		    //          I2201/lambda2   2*I421m1/lambda/ax3    I440m1/lambda/az3        //
+		    //                                                                          //
+		    //////////////////////////////////////////////////////////////////////////////
 
-			    // row 1
-			    J[0][0] = I2001/lambda2;
-			    //J[0][2] = I420m1 / lambdaaz3;
-			    //J[0][1] = 2.0 * I401m1 / lambdaiaxi3;
-			    J[0][1] = 2.0*(Eai+PTai)/ax;
-			    J[0][2] = (Eai+PLai)/az;
-			    // row 2
-			    J[1][0] = I2011/lambda2;
-			    J[1][1] = 4.0 * I402m1 / lambdaax3;
-			    J[1][2] = I421m1 / lambdaaz3;
-			    // row 3
-			    J[2][0] = I2201/lambda2;
-			    J[2][1] = 2.0 * I421m1 / lambdaax3;
-			    J[2][2] = I440m1 / lambdaaz3;
+		    // row 1
+		    J[0][0] = I2001/lambda2;
+		    //J[0][2] = I420m1 / lambdaaz3;
+		    //J[0][1] = 2.0 * I401m1 / lambdaiaxi3;
+		    J[0][1] = 2.0*(Eai+PTai)/ax;
+		    J[0][2] = (Eai+PLai)/az;
+		    // row 2
+		    J[1][0] = I2011/lambda2;
+		    J[1][1] = 4.0 * I402m1 / lambdaax3;
+		    J[1][2] = I421m1 / lambdaaz3;
+		    // row 3
+		    J[2][0] = I2201/lambda2;
+		    J[2][1] = 2.0 * I421m1 / lambdaax3;
+		    J[2][2] = I440m1 / lambdaaz3;
 
-	    		break;
-	    	}
-	    	case broyden:
-	    	{
-	    		// don't accidentally change any arrays except for J 
-	    		double dXnorm2 = sqrt(dX[0]*dX[0]+dX[1]*dX[1]+dX[2]*dX[2]);
-	    		double dX_norm[3] = {0.0,0.0,0.0};
-	    		double Jcurrent_dX[3] = {0.0,0.0,0.0};
+    		break;
+    	}
+    	case broyden:
+    	{
+    		// Broyden's method
+    		double dXabs = sqrt(dX[0]*dX[0]+dX[1]*dX[1]+dX[2]*dX[2]);
+    		double dX_unit[3] = {0.0,0.0,0.0};
+    		double Jcurrent_dX[3] = {0.0,0.0,0.0};
 
-	    		for(int i = 0; i < n; i++)
+    		for(int i = 0; i < n; i++)
+			{
+				dX_unit[i] = dX[i] / dXabs;
+
+				for(int k = 0; k < n; k++)
+				{
+					Jcurrent_dX[i] += Jcurrent[i][k]*dX[k];
+				}
+			}
+    		for(int i = 0; i < n; i++)
+    		{
+    			for(int j = 0; j < n; j++)
     			{
-    				dX_norm[i] = dX[i] / dXnorm2; 
-
-    				for(int k = 0; k < n; k++)
-    				{
-    					Jcurrent_dX[i] += Jcurrent[i][k]*dX[k]; 
-    				}
+    				J[i][j] = Jcurrent[i][j] + (F[i] - Fcurrent[i] - Jcurrent_dX[i]) * dX_unit[j] / dXabs;
+    				// do I get any numerical error from this?
     			}
-
-    			// Broyden's method 
-	    		for(int i = 0; i < n; i++)
-	    		{
-	    			for(int j = 0; j < n; j++)
-	    			{
-	    				J[i][j] = Jcurrent[i][j] + (F[i] - Fcurrent[i] - Jcurrent_dX[i]) * dX_norm[j] / dXnorm2; 
-
-	    				// do I get any numerical error from this? 
-	    			}
-	    		}
-	    		break;
-	    	}
-	    	case none:
-	    	{
-	    		//cout << "Not calculating Jacobian " << jtype << endl;
-	    		break;
-	    	}
-	    	default:
-	    		throw "please specify jacobian type\n";
-	    }
-	}
-	catch (char const *excp)
-	{
-		cout << "\nRoot finding error: " << excp;
-		exit(-1); 
-	}
+    		}
+    		break;
+    	}
+    	case none:
+    	{
+    		// No calculation of Jacobian required here
+    		break;
+    	}
+    	default:
+    		throw "please specify jacobian type\n";
+    }
 }
 
 
@@ -335,8 +324,8 @@ double linebacktrack(double Ea, double PTa, double PLa, double thermal_mass, dou
 	double l = 1.0;          // default value
 	double alpha = 0.0001;   // constant for sufficient decrease of f
 
-	double dXnorm2 = sqrt(fabs(dX[0]*dX[0]+dX[1]*dX[1]+dX[2]*dX[2]));
-	double lmin = toldX / dXnorm2;
+	double dXabs = sqrt(fabs(dX[0]*dX[0]+dX[1]*dX[1]+dX[2]*dX[2]));
+	double lmin = toldX / dXabs;
 
 	if(l < lmin)
 	{
@@ -356,20 +345,19 @@ double linebacktrack(double Ea, double PTa, double PLa, double thermal_mass, dou
 
 	double gprime0 = 0.0;
 	for(int k = 0; k < n; k++) gprime0 += gradfcurrent[k]*dX[k];
-	if(gprime0 >= 0.0)
-		throw "\nRoundoff issue with gradient descent";
+	if(gprime0 >= 0.0) throw "\nRoundoff issue with gradient descent";
 
 	if(f <= fcurrent + alpha*gprime0)
 	{
 		return l;	// sufficient decrease of f
 	}
 	else
-	{	
+	{
 		double lroot;
 		double lprev;
 		double fprev = f;
 		double a, b, z;
-		int i = 1; 
+		int i = 1;
 		do
 		{
 			if(i == 1) // quadratic root formula
@@ -390,7 +378,7 @@ double linebacktrack(double Ea, double PTa, double PLa, double thermal_mass, dou
 					else
 						lroot = (-b + sqrt(z)) / (3.0*a);
 
-					// does result change if I used general formula? 
+					// does result change if I used general formula?
 
 					// if(z < 0.0)
 					// 	lroot = 0.5*l;
@@ -417,7 +405,7 @@ double linebacktrack(double Ea, double PTa, double PLa, double thermal_mass, dou
 
 		i++;
 
-		// while loop should eventually terminate if l -> 0 
+		// while loop should eventually terminate if l -> 0
 
 		} while(f > fcurrent + l*alpha*gprime0);
 	}
@@ -451,7 +439,7 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 	// order: update conserved variables, update inferred variables, update anisotropic variables
 
 	const double T = effectiveTemperature(e);				 // temperature
-	double thermal_mass = z_Quasiparticle(T) * T;	   	     // quasiparticle mass 
+	double thermal_mass = z_Quasiparticle(T) * T;	   	     // quasiparticle mass
 
 	const double Ea = e - B;
 	const double PTa = pt;
@@ -461,7 +449,7 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 	if(PTa < 0.0) throw "PTa is out of bounds!\n";
 	if(PLa < 0.0) throw "PLa is out of bounds!\n";
 
-	const int n = 3; 										 // space dimension 
+	const int n = 3; 										 // space dimension
 	double X[n] = {*lambda, *ax, *az};						 // initialize solution vector to guess; will iterate w/ + l*dX
 	double Xcurrent[n];						     		     // holder for current X solution
 	double dX[n];							 				 // dX iteration
@@ -470,7 +458,7 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
   	double f;		                                  	     // f = 0.5 F * F at Xcurrent+dX (full Newton step)
   	double fcurrent;										 // f = 0.5 F * F at Xcurrent
 	double **J = (double **) malloc(n * sizeof(double *));   // J = Jacobian of F
-	double **Jcurrent = (double **) malloc(n * sizeof(double *)); // Jacobian at Xcurrent 
+	double **Jcurrent = (double **) malloc(n * sizeof(double *)); // Jacobian at Xcurrent
 	double gradf[n];										 // gradient of f = F*F/2
 	double gradf_sum; 										 // for gradf calculation
  	int pvector[n];									  		 // permutation vector
@@ -487,132 +475,178 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 	int i = 0;				  // starting ith iteration
 	int Nmax = 5000;	      // max number of iterations
 	jacobian jtype;  		  // jacobian type
-	double dXnorm2;           // L2-norm of dX iteration
-	double Fnorm2;		      // L2-norm of F
+	double dXabs;             // magnitude of dX
+	double Fabs;		      // magnitude of F
 	double toldX = 1.0e-7;    // tolerance for dX
 	double tolF = 1.0e-11;    // tolerance for F
-	double alpha = 0.0001;    // minimum descent parameter 
 	double tolmin = 1.0e-6;   // tolerance for spurious convergence to local min of f = F*F/2
 	double stepmax = 100.0;   // scaled maximum step length allowed in line searches (I don't know what this means...)
+	double gprime0;           // descent derivative
 	double l; 		  		  // partial step parameter
 
 
 	//stepmax calculation (no idea what this means, so far it doesn't seem to be used..)
-	stepmax = stepmax*fmax(sqrt(fabs(X[0]*X[0]+X[1]*X[1]+X[2]*X[2])),sqrt(3.0)*(double)n);  
+	stepmax = stepmax*fmax(sqrt(fabs(X[0]*X[0]+X[1]*X[1]+X[2]*X[2])),sqrt(3.0)*(double)n);
 
 
 	// 3D Newton method with line backtracking
 	do{
-
 		// store current solution
-		for(int k = 0; k < n; k++) Xcurrent[k] = X[k];	         
+		for(int k = 0; k < n; k++) Xcurrent[k] = X[k];
 
 
-		// starting Jacobian method 
-	    if(i == 0) jtype = newton; 
-	    else if(i > 0) jtype = broyden; 
+		// starting Jacobian method
+	    if(i == 0) jtype = newton;
+	    else if(i > 0) jtype = broyden;
 
 
-	    // compute F and default J at Xcurrent 
-		calcFJ(Ea, PTa, PLa, thermal_mass, Xcurrent, dX, F, Fcurrent, J, Jcurrent, jtype, n);  
+	    // compute F and default J at Xcurrent
+		calcFJ(Ea, PTa, PLa, thermal_mass, Xcurrent, dX, F, Fcurrent, J, Jcurrent, jtype, n);
 
 
 		// store current F and default J
-    	for(int k = 0; k < n; k++) Fcurrent[k] = F[k]; 	            
+    	for(int k = 0; k < n; k++) Fcurrent[k] = F[k];
     	for(int k = 0; k < n; k++)
     	{
-    		// will be used to reset J if neccesary 
     		for(int j = 0; j < n; j++) Jcurrent[k][j] = J[k][j];
     	}
 
 
-    	Fnorm2 = sqrt(fabs(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]));     // L2-norm of F
-	    fcurrent = 0.5*Fnorm2*Fnorm2; 					            // f(Xcurrent)
+    	// magnitude of F at Xcurrent
+    	Fabs = sqrt(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]);
+	    fcurrent = 0.5*Fabs*Fabs;
 
 
-	    // compute gradient of F*F/2: gradf(Xcurrent)
-	    // gradf_k = F_m * J_mk
-
+	    // gradient of f at Xcurrent
 	    for(int k = 0; k < n; k++)
 	    {
 	    	gradf_sum = 0.0; // clear sum
 	    	for(int m = 0; m < n; m++) gradf_sum += F[m] * J[m][k];
-	    	gradf[k] = gradf_sum;
+	    	gradf[k] = gradf_sum;  // gradf_k = F_m * J_mk
 	    }
 
 	    // make
 	    // ./rta &
 
-
 	    // Solve matrix equation: J * dX = - F
 	    for(int k = 0; k < n; k++) F[k] = - F[k];  // change sign of F first
 	    // LU solver routine
 	    LUP_decomposition(J, n, pvector);          // LUP of J now stored in J (pvector also updated)
-	    LUP_solve(J, n, pvector, F);               // dX is now stored in F (F is no longer F)
+	    LUP_solve(J, n, pvector, F);               // dX is now stored in F
 	    for(int k = 0; k < n; k++) dX[k] = F[k];   // load full Newton iteration dX
 
 
 	    // rescale dX if too large
-	    dXnorm2 = sqrt(dX[0]*dX[0]+dX[1]*dX[1]+dX[2]*dX[2]);
-		if(dXnorm2 > stepmax)
+	    dXabs = sqrt(dX[0]*dX[0]+dX[1]*dX[1]+dX[2]*dX[2]);
+		if(dXabs > stepmax)
 		{
 			cout << "Newton step is too large" << endl;
-			for(int k = 0; k < n; k++) dX[k] *= (stepmax/dXnorm2);
+			for(int k = 0; k < n; k++) dX[k] *= (stepmax/dXabs);
 		}
 
 
-	    // it's not finished I need to do the gradient terms  
+		// descent derivative
+		gprime0 = 0.0;
+		for(int k = 0; k < n; k++) gprime0 += gradf[k]*dX[k];
+
+		switch(jtype)
+		{
+			case newton:
+				if(gprime0 >= 0.0) throw "error in newton gradient descent\n";
+			case broyden:
+			{
+				//if(gprime0 >= 0.0) throw "error in broyden gradient descent\n";
+				break;
+			}
+			default:
+				throw "please specify jacobian type 2\n";
+		}
+
 
 		// default Newton iteration (l = 1)
 		for(int k = 0; k < n; k++) X[k] += dX[k];
 
-		// calculate F(X)
-		jtype = none;
-		calcFJ(Ea, PTa, PLa, thermal_mass, X, dX, F, Fcurrent, J, Jcurrent, jtype, n);
+
+		// F vector and magnitude at X
+		calcFJ(Ea, PTa, PLa, thermal_mass, X, dX, F, Fcurrent, J, Jcurrent, none, n);
 		f = 0.5*(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]);
 
+		//cout << jtype << endl;
 
-		// If default Broyden step doesn't decrease f, redo the default Newton step with exact Jacobian 
-		if(f > fcurrent + alpha*gprime0)
+		switch(jtype)
 		{
-			jtype = newton; 
-
-			// reset X,F,J 
-			for(int k = 0; k < n; k++) X[k] = Xcurrent[k];
-	    	for(int k = 0; k < n; k++) F[k] = Fcurrent[k]; 	  // I don't need to recalculate this.           
-	    	for(int k = 0; k < n; k++)
-	    	{
-	    		for(int j = 0; j < n; j++) J[k][j] = Jcurrent[k][j]; // I just this 
-	    	}					          
-
-	    	// 
-	    	calcFJ(Ea, PTa, PLa, thermal_mass, Xcurrent, dX, F, Fcurrent, J, Jcurrent, jtype, n); 
-
-		    for(int k = 0; k < n; k++)
-		    {
-		    	gradf_sum = 0.0; // clear sum
-		    	for(int m = 0; m < n; m++) gradf_sum += F[m] * J[m][k];
-		    	gradf[k] = gradf_sum;
-		    }
-
-		    for(int k = 0; k < n; k++) F[k] = - F[k];  
-		  
-		    LUP_decomposition(J, n, pvector);         
-		    LUP_solve(J, n, pvector, F);               
-		    for(int k = 0; k < n; k++) dX[k] = F[k];   
-
-		    dXnorm2 = sqrt(dX[0]*dX[0]+dX[1]*dX[1]+dX[2]*dX[2]);
-			if(dXnorm2 > stepmax)
+			case newton:
 			{
-				cout << "Newton step is too large" << endl;
-				for(int k = 0; k < n; k++) dX[k] *= (stepmax/dXnorm2);
+				// Line backtracking algorithm (solve for l)
+				l = linebacktrack(Ea, PTa, PLa, thermal_mass, Xcurrent, dX, Fcurrent, F, gradf, J, Jcurrent, toldX, n);
+				break;
 			}
+			case broyden:
+			{
+				// If default Broyden step doesn't decrease f,
+				// redo the default Newton step with exact Jacobian
+				if(f > fcurrent - 0.2*fabs(gprime0))
+				{
+					//cout << "Switch to Newton at " << i << "\n";
+
+					jtype = newton;
+
+					// reset X,F
+					for(int k = 0; k < n; k++) X[k] = Xcurrent[k];
+			    	for(int k = 0; k < n; k++) F[k] = Fcurrent[k];
+
+			    	// recalculate J
+			    	calcFJ(Ea, PTa, PLa, thermal_mass, Xcurrent, dX, F, Fcurrent, J, Jcurrent, jtype, n);
+
+
+			    	// store the new J
+			    	for(int k = 0; k < n; k++)
+			    	{
+			    		for(int j = 0; j < n; j++) Jcurrent[k][j] = J[k][j];
+			    	}
+
+				    for(int k = 0; k < n; k++)
+				    {
+				    	gradf_sum = 0.0; // clear sum
+				    	for(int m = 0; m < n; m++) gradf_sum += F[m] * J[m][k];
+				    	gradf[k] = gradf_sum;
+				    }
+
+				    for(int k = 0; k < n; k++) F[k] = - F[k];
+
+				    LUP_decomposition(J, n, pvector);
+				    LUP_solve(J, n, pvector, F);
+				    for(int k = 0; k < n; k++) dX[k] = F[k];
+
+				    dXabs = sqrt(dX[0]*dX[0]+dX[1]*dX[1]+dX[2]*dX[2]);
+					if(dXabs > stepmax)
+					{
+						cout << "Newton step is too large" << endl;
+						for(int k = 0; k < n; k++) dX[k] *= (stepmax/dXabs);
+					}
+
+					for(int k = 0; k < n; k++) X[k] += dX[k];
+
+					jtype = none;
+					// recalculate F at X
+					calcFJ(Ea, PTa, PLa, thermal_mass, X, dX, F, Fcurrent, J, Jcurrent, jtype, n);
+
+					l = linebacktrack(Ea, PTa, PLa, thermal_mass, Xcurrent, dX, Fcurrent, F, gradf, J, Jcurrent, toldX, n);
+				}
+				else
+				{
+					//cout << "Broyden works at " << i << "\n";
+				}
+				// else
+				// {
+				// 	l = linebacktrack(Ea, PTa, PLa, thermal_mass, Xcurrent, dX, Fcurrent, F, gradf, J, Jcurrent, toldX, n);
+				// }
+				break;
+			}
+			case none:
+				throw "please specify jacobian type 3\n";
 		}
 
-
-		 // Line backtracking algorithm (solve for l)
-
-		l = linebacktrack(Ea, PTa, PLa, thermal_mass, Xcurrent, dX, Fcurrent, F, gradf, J, Jcurrent, toldX, n);
 
 	    // redo the update for X_i using l from backtracking
 	    for(int k = 0; k < n; k++) X[k] = Xcurrent[k] + fabs(l)*dX[k];
@@ -621,14 +655,10 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 	    for(int k = 0; k < n; k++) dX[k] *= fabs(l);
 
 	    // redo |dX| iteration
-	    dXnorm2 = sqrt(fabs(dX[0]*dX[0] + dX[1]*dX[1] + dX[2]*dX[2]));
+	    dXabs = sqrt(fabs(dX[0]*dX[0] + dX[1]*dX[1] + dX[2]*dX[2]));
 
-		//cout << "dXnorm2 = " << dXnorm2 << endl;
-
-		// // update individual variables
-		// lambdai = X[0];
-  		// axi = X[1];
-  		// azi = X[2];
+		// reset l to default value
+		l = 1.0;
 
 		i++;
 
@@ -648,7 +678,7 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
     		throw "az is negative\n";
     	}
 
-	}while(((dXnorm2 > toldX) || (Fnorm2 > tolF)) && (i < Nmax));
+	}while(((dXabs > toldX) || (Fabs > tolF)) && (i < Nmax));
 
 
 
