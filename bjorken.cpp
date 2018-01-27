@@ -216,6 +216,10 @@ int main()
 	double B = 0.142*(Beq + dBasy);
 
 
+	// adjust B such that one PLa is in bounds
+	// and two adjust it further until a positive
+    // solution exists
+
 
 	//double B = 1.0*(Beq + dBasy);
 
