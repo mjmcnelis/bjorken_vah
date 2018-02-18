@@ -26,6 +26,7 @@ using namespace std;
 
 void LUP_decomposition(double ** A, int n, int * pvector)
 {
+	// takes A and decomposes it into LU (with row permutations P)
 	// A = n x n matrix; function does A -> PA = LU; (L,U) of PA stored in same ** array
 	// n = size of A
 	// pvector = permutation vector; set initial pvector[i] = i (to track implicit partial pivoting)
@@ -336,7 +337,7 @@ void linebacktrack(double *l, double Ea, double PTa, double PLa, double thermal_
 
 	double lroot, lprev, fprev;
 	double a, b, z;
-	double N = 100;
+	double N = 10;
 
 	// Main loop
 	for(int i = 0; i < N; i++)
@@ -347,8 +348,6 @@ void linebacktrack(double *l, double Ea, double PTa, double PLa, double thermal_
 			*l = ls;
 			return;
 		}
-
-
 		// quadratic formula
 		if(i == 0)
 		{
@@ -432,45 +431,44 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 	const double T = effectiveTemperature(e);				 // temperature
 	double thermal_mass = z_Quasiparticle(T) * T;	   	     // quasiparticle mass
 
-	const double Ea = e - B;
-	const double PTa = pt;
-	const double PLa = pl;
+	const double Ea = e - B;								 // kinetic energy density
+	const double PTa = pt;									 // kinetic transverse pressure
+	const double PLa = pl;									 // kinetic longitudinal pressure
 
 	if(Ea < 0.0) throw "Ea is out of bounds!\n";
 	if(PTa < 0.0) throw "PTa is out of bounds!\n";
 	if(PLa < 0.0) throw "PLa is out of bounds!\n";
 
-	const int n = 3; 										 // space dimension
+	const int n = 3; 										 // multivariable dimension
 	double X[n] = {*lambda, *ax, *az};						 // initialize solution vector to guess; will iterate w/ + l*dX
-	double Xcurrent[n];						     		     // holder for current X solution
+	double Xcurrent[n] = {*lambda, *ax, *az};			     // holder for current X solution
 	double dX[n];							 				 // dX iteration
-  	double F[n];  											 // F vector (root equation: F[X] = 0)
-  	double Fcurrent[n];  									 // holder for current F
-  	double f;		                                  	     // f = 0.5 F * F at Xcurrent+dX (full Newton step)
+  	double F[n];  											 // F(X) vector in root equation F(Xsol) = 0
+  	double Fcurrent[n];  									 // F(Xcurrent)
+  	double f;		                                  	     // f = 0.5 F * F at X
   	double fcurrent;										 // f = 0.5 F * F at Xcurrent
-	double **J = (double **) malloc(n * sizeof(double *));   // J = Jacobian of F
-	double **Jcurrent = (double **) malloc(n * sizeof(double *)); // Jacobian at Xcurrent
-	double gradf[n];										 // gradient of f = F*F/2
-	double gradf_sum; 										 // for gradf calculation
- 	int pvector[n];									  		 // permutation vector
- 	bool computeJ;											 // option to compute J
+	double **J = (double**)malloc(n*sizeof(double*));        // J = Jacobian of F at X
+	double **Jcurrent = (double**)malloc(n*sizeof(double*)); // Jacobian at Xcurrent
+	double gradf[n];										 // gradient of f = F*F/2 at Xcurrent
+	double gradf_sum; 										 // summation variable for gradf calculation
+ 	int pvector[n];									  		 // permutation vector for LUP solver
+ 	jacobian jtype = newton;                                 // jacobian method variable (newton for i = 0)
 
  	// allocate Jacobian matrix
  	for(int k = 0; k < n; k++)
 	{
-		J[k] = (double *) malloc(n* sizeof(double));
- 		Jcurrent[k] = (double *) malloc(n* sizeof(double));
+		J[k] = (double*)malloc(n*sizeof(double));
+ 		Jcurrent[k] = (double*)malloc(n*sizeof(double));
  	}
 
 	int Nmax = 10000;	      // max number of iterations
-	jacobian jtype = newton;  // jacobian type
 	double dXabs;             // magnitude of dX
 	double Fabs;		      // magnitude of F
-	double toldX = 1.0e-6;    // tolerance for dX
-	double tolF = 1.0e-11;    // tolerance for F
+	double toldX = 1.0e-6;    // tolerance for dX ~ 0
+	double tolF = 1.0e-10;    // tolerance for F ~ 0
 	double tolmin = 1.0e-6;   // tolerance for spurious convergence to local min of f = F*F/2
 	double stepmax = 100.0;   // scaled maximum step length allowed in line searches (I don't know what this means...)
-	double gprime0;           // descent derivative
+	double gprime0;           // descent derivative at Xcurrent
 	double l = 1.0; 		  // partial step parameter
 
 
@@ -478,11 +476,15 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 	stepmax = stepmax*fmax(sqrt(X[0]*X[0]+X[1]*X[1]+X[2]*X[2]),sqrt(3.0)*(double)n);
 
 
-	// 3D Newton method with line backtracking
+	// compute F at Xcurrent
+	calcF(Ea, PTa, PLa, thermal_mass, Xcurrent, F, n);
+
+
+	// 3D Newton method with line backtracking (main loop)
 	for(int i = 0; i < Nmax; i++)
 	{
-		// run iteration at least once
-		// before checking for convergence
+		// run at least once before
+		// checking for convergence
 		if(i > 0)
 		{
 			if(dXabs <= toldX & Fabs <= tolF)
@@ -493,29 +495,14 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 				*az = X[2];
 				return;
 			}
+			else
+			{
+				jtype = broyden;
+			}
 		}
 
 
-		// store current solution
-		for(int k = 0; k < n; k++)
-		{
-			Xcurrent[k] = X[k];
-		}
-
-
-		// starting Jacobian method
-	    if(i > 0)
-	    {
-	    	jtype = broyden;
-	    }
-
-
-	    // compute F, default J and f at Xcurrent
-	    //calcF(Ea, PTa, PLa, thermal_mass, Xcurrent, F, n);
-		if(i == 0)
-		{
-			calcF(Ea, PTa, PLa, thermal_mass, Xcurrent, F, n);
-		}
+	    // compute default J and f at Xcurrent
 	    calcJ(Ea, PTa, PLa, thermal_mass, Xcurrent, dX, F, Fcurrent, J, Jcurrent, jtype, n);
 	    fcurrent = 0.5*(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]);
 
@@ -529,7 +516,7 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
     			Jcurrent[k][j] = J[k][j];
     		}
     		// gradient of f at Xcurrent (gradf_k = F_m * J_mk)
-    		gradf_sum = 0.0;
+    		gradf_sum = 0.0; // clear sum
 	    	for(int m = 0; m < n; m++) gradf_sum += F[m] * J[m][k];
 	    	gradf[k] = gradf_sum;
     	}
@@ -539,8 +526,8 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 	    for(int k = 0; k < n; k++) F[k] = - F[k];  // change sign of F first
 	    // LU solver routine
 	    LUP_decomposition(J, n, pvector);          // LUP of J now stored in J (pvector also updated)
-	    LUP_solve(J, n, pvector, F);               // dX is now stored in F
-	    for(int k = 0; k < n; k++) dX[k] = F[k];   // load full Newton iteration dX
+	    LUP_solve(J, n, pvector, F);               // F now stores dX
+	    for(int k = 0; k < n; k++) dX[k] = F[k];   // load full Newton/Broyden iteration dX
 
 
 	    // rescale dX if too large
@@ -560,54 +547,61 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 		switch(jtype)
 		{
 			case newton:
+			{
 				if(gprime0 >= 0.0) throw "error in newton gradient descent\n";
+			}
 			case broyden:
 			{
 				break;
 			}
 			default:
+			{
 				throw "correct gradient descent\n";
+			}
 		}
 
 
-		// default Newton iteration (l = 1)
-		for(int k = 0; k < n; k++)
-		{
-			X[k] += dX[k];
-		}
-
-
-		// F vector and magnitude at X
-		calcF(Ea, PTa, PLa, thermal_mass, X, F, n);
-		f = 0.5*(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]);
 
 		switch(jtype)
 		{
 			case newton:
 			{
-				// Line backtracking algorithm (solve for l)
+				// line backtracking algorithm (solve for l and update F(Xcurrent+l*dX))
 				linebacktrack(&l, Ea, PTa, PLa, thermal_mass, Xcurrent, dX, fcurrent, F, gradf, toldX, n);
 
-				// redo iteration for l != 1
+				// update X
 			    for(int k = 0; k < n; k++)
 			    {
-			    	dX[k] *= l;
-			    	X[k] = Xcurrent[k] + dX[k];
+			    	X[k] = Xcurrent[k] + l*dX[k];
 			    }
 				break;
 			}
 			case broyden:
 			{
+				// default Broyden iteration (l = 1)
+				for(int k = 0; k < n; k++)
+				{
+					X[k] = Xcurrent[k] + dX[k];
+				}
+				// F vector and magnitude at default X
+				calcF(Ea, PTa, PLa, thermal_mass, X, F, n);
+				f = 0.5*(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]);
+
+
 				// If default Broyden step doesn't decrease f,
 				// redo the default Newton step with exact Jacobian
 				if(f > fcurrent - 0.2*fabs(gprime0))
 				{
 					// reset F
-			    	for(int k = 0; k < n; k++) F[k] = Fcurrent[k];
+			    	for(int k = 0; k < n; k++)
+			    	{
+			    		F[k] = Fcurrent[k];
+			    	}
 
+			    	jtype = newton;
 
 			    	// reinitialize J as exact
-			    	calcJ(Ea, PTa, PLa, thermal_mass, Xcurrent, dX, F, Fcurrent, J, Jcurrent, newton, n);
+			    	calcJ(Ea, PTa, PLa, thermal_mass, Xcurrent, dX, F, Fcurrent, J, Jcurrent, jtype, n);
 
 
 			    	// store J and calculate gradf
@@ -623,6 +617,7 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 				    }
 
 
+				    // resolve matrix equation
 				    for(int k = 0; k < n; k++) F[k] = - F[k];
 				    LUP_decomposition(J, n, pvector);
 				    LUP_solve(J, n, pvector, F);
@@ -644,11 +639,10 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 					linebacktrack(&l, Ea, PTa, PLa, thermal_mass, Xcurrent, dX, fcurrent, F, gradf, toldX, n);
 
 
-					// redo iteration for l != 1
+					// redo update for X
 				    for(int k = 0; k < n; k++)
 				    {
-				    	dX[k] *= l;
-				    	X[k] = Xcurrent[k] + dX[k];
+					    X[k] = Xcurrent[k] + l*dX[k];
 				    }
 				}
 				break;
@@ -658,9 +652,16 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 		}
 
 
-	    // update criteria values
+	    // update convergence values
 	    Fabs = sqrt(F[0]*F[0] + F[1]*F[1] + F[2]*F[2]);
 	    dXabs = sqrt(dX[0]*dX[0] + dX[1]*dX[1] + dX[2]*dX[2]);
+
+
+	    // store current solution
+		for(int k = 0; k < n; k++)
+		{
+			Xcurrent[k] = X[k];
+		}
 
 
 	    // for some reason the solution can yield
@@ -682,6 +683,9 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
     		throw "az is negative\n";
     	}
 
+    	//cout << X[0] << endl;
+
+    	// what should I do if I hit a local minimum? (make a |dF| convergence criteria)
     	if(i == Nmax - 1) throw "Iterations exceeded: couldn't find anisotropic variables...\n";
     }
 
