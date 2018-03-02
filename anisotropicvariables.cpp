@@ -408,10 +408,10 @@ void linebacktrack(double *l, double Ea, double PTa, double PLa, double thermal_
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//                       ANISOTROPIC VARIABLES                      ::
+//                       ANISOTROPIC VARIAbLES                      ::
 //                                                                  ::
 //     Compute the anisotropic variables (lambda,ax,az) from        ::
-//	   the quantities (e,B,pl,pt)       		                    ::
+//	   the quantities (e,b,pl,pt)       		                    ::
 //                                                                  ::
 //                     get_anisotropic_variables                    ::
 //																	::
@@ -422,18 +422,18 @@ void linebacktrack(double *l, double Ea, double PTa, double PLa, double thermal_
 
 
 
-void get_anisotropic_variables(double e, double pl, double pt, double B, double *lambda, double *ax, double *az)
+void get_anisotropic_variables(double e, double pl, double pt, double b, double *lambda, double *ax, double *az)
 {
 	// not designed for conformal mode, it will crash
-	// (e,B,pt,pl) should already be updated before running this
+	// (e,b,pt,pl) should already be updated before running this
 	// order: update conserved variables, update inferred variables, update anisotropic variables
 
 	const double T = effectiveTemperature(e);				 // temperature
 	double thermal_mass = z_Quasiparticle(T) * T;	   	     // quasiparticle mass
 
-	const double Ea = e - B;								 // kinetic energy density
-	const double PTa = pt;									 // kinetic transverse pressure
-	const double PLa = pl;									 // kinetic longitudinal pressure
+	const double Ea = e - b;								 // kinetic energy density
+	const double PTa = pt + b;							     // kinetic transverse pressure
+	const double PLa = pl + b;							     // kinetic longitudinal pressure
 
 	if(Ea < 0.0) throw "Ea is out of bounds!\n";
 	if(PTa < 0.0) throw "PTa is out of bounds!\n";
@@ -490,9 +490,16 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
 			if(dXabs <= toldX & Fabs <= tolF)
 			{
 				//cout << i << " ";
+
+				// update anisotropic variables
 				*lambda = X[0];
 				*ax = X[1];
 				*az = X[2];
+
+				// free allocated memory
+				free_2D(J,n);
+				free_2D(Jcurrent,n);
+
 				return;
 			}
 			else
@@ -686,19 +693,14 @@ void get_anisotropic_variables(double e, double pl, double pt, double B, double 
     	//cout << X[0] << endl;
 
     	// what should I do if I hit a local minimum? (make a |dF| convergence criteria)
-    	if(i == Nmax - 1) throw "Iterations exceeded: couldn't find anisotropic variables...\n";
+    	if(i == Nmax - 1)
+		{
+			// free allocated memory and throw error
+			free_2D(J,n);
+			free_2D(Jcurrent,n);
+			throw "Iterations exceeded: couldn't find anisotropic variables...\n";
+		}
     }
-
-	// free allocated memory
-    free(X);
-    free(Xcurrent);
-    free(dX);
-    free(F);
-    free(Fcurrent);
-    free(gradf);
-    free(pvector);
-	free_2D(J,n);
-	free_2D(Jcurrent,n);
 }
 
 

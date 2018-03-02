@@ -71,9 +71,9 @@ int main()
 
 
 	// input parameters
-	double T0 = 0.5 * GEV_TO_INVERSE_FM;  // initial temperature in fm^-1
-	double t0 = 0.25;				       // initial time in fm
-	double tf = 50.0;					   // final time in fm
+	double T0 = 0.25 * GEV_TO_INVERSE_FM;  // initial temperature in fm^-1
+	double t0 = 0.25;				      // initial time in fm
+	double tf = 100.0;					  // final time in fm
 
 
 	// thermodynamic quantities
@@ -81,9 +81,10 @@ int main()
 	double e0 = equilibriumEnergyDensity(T0);
 	double e = e0;
 	double p = equilibriumPressure(e);
+	double p0 = p;
 	double s = (e+p)/T;
 	double cs2 = speedOfSoundSquared(e);
-	double Beq = equilibriumBquasi(T);
+	double beq = equilibriumBquasi(T);
 
 
 	// viscosities and relaxation times
@@ -92,8 +93,8 @@ int main()
 	double taupi = (s*etas) / beta_shear(T);
 	double taubulk = (s*zetas) / beta_bulk(T);
 
-	//double piNS =  4.0 * (e0+p0) / (3.0*T0*t0) * shearViscosityToEntropyDensity(T0);
-	//double bulkNS = - (e0+p0) / (t0*T0) * bulkViscosityToEntropyDensity(T0);
+	double piNS =  4.0 * (e0+p0) / (3.0*T0*t0) * shearViscosityToEntropyDensity(T0);
+	double bulkNS = - (e0+p0) / (t0*T0) * bulkViscosityToEntropyDensity(T0);
 
 
 	// initial Tmunu components
@@ -111,37 +112,42 @@ int main()
 
 
 	// Glasma initial conditions
-	double PLPTratio = 0.01;
-	double PT = (3.0/(2.0+PLPTratio)) * e / 3.0;
-	double PL = (3.0 - 6.0/(2.0+PLPTratio)) * e / 3.0;
+	double plptratio = 0.08;
+	double pt = (3.0/(2.0+plptratio)) * e / 3.0;
+	double pl = (3.0 - 6.0/(2.0+plptratio)) * e / 3.0;
 
-	//PT = p;
-	//PL = p;
+	pl = p;
+	pt = p;
 
 	//cout << Beq / p << endl;
 
 	double m = T * z_Quasiparticle(T);
 
-	cout << m / GEV_TO_INVERSE_FM << endl;
-	cout << beta_shear(T) << endl;
-	cout << beta_bulk(T) << endl;
+	// cout << m / GEV_TO_INVERSE_FM << endl;
+	// cout << beta_shear(T) << endl;
+	// cout << beta_bulk(T) << endl;
 
-	double dBasy = -3.0*taubulk*mdmde_Quasiparticle(e)*(e+PL)*(2.0*PT/3.0+PL/3.0-p)/(t0*m*m) /
-			(1.0 + 4.0*taubulk*mdmde_Quasiparticle(e)*(e+PL)/(t0*m*m));
+	//double dBasy = -3.0*taubulk*mdmde_Quasiparticle(e)*(e+PL)*(2.0*PT/3.0+PL/3.0-p)/(t0*m*m) /
+	//		(1.0 + 4.0*taubulk*mdmde_Quasiparticle(e)*(e+PL)/(t0*m*m));
 
-	double B = 0.153*(Beq + dBasy);
-	//double B = Beq + dBasy;
+	double dbasy = -3.0*taubulk*mdmde_Quasiparticle(e)*(e+pl)*(2.0*pt/3.0+pl/3.0-p)/(t0*m*m) /
+			(1.0 + 4.0*taubulk*mdmde_Quasiparticle(e)*(e+pl)/(t0*m*m));
 
-	double pl = PL + B;
-	double pt = PT + B;
-	double Ea = e - B;
+
+	cout << beq + dbasy << endl;
+
+	//double b = 0.9*(beq + dbasy);
+	double b = beq + dbasy;
+
+	// double pl = PL + B;
+	// double pt = PT + B;
 	double lambda = T;
 	double ax = 1.0;
 	double az = 1.0;
 
 	try
 	{
-	get_anisotropic_variables(e, pl, pt, B, &lambda, &ax, &az);
+	get_anisotropic_variables(e, pl, pt, b, &lambda, &ax, &az);
 	}
 	catch (char const *excp)
 	{
@@ -164,7 +170,7 @@ int main()
 	double Ttn_mid, Ttn_end;
 	double pl_mid, pl_end;
 	double pt_mid, pt_end;
-	double B_mid, B_end;
+	double b_mid, b_end;
 
 
 	// time data (t = tau)
@@ -179,7 +185,7 @@ int main()
 	ofstream eplot, piplot, bulkplot, plptplot;
 	ofstream Tplot, lambdaplot, axplot, azplot;
 	ofstream RpiInvplot, RbulkInvplot;
-	//ofstream piNSplot, bulkNSplot;
+	ofstream piNSplot, bulkNSplot;
 	ofstream taupiplot, taubulkplot;
 	ofstream Bplot, Beqplot, dBasyplot;
 
@@ -196,8 +202,8 @@ int main()
 	RpiInvplot.open("RpiInvplot_vah.dat", ios::out);
 	RbulkInvplot.open("RbulkInvplot_vah.dat", ios::out);
 
-	//piNSplot.open("piNSplot_vah.dat", ios::out);
-	//bulkNSplot.open("bulkNSplot_vah.dat", ios::out);
+	piNSplot.open("piNSplot_vah.dat", ios::out);
+	bulkNSplot.open("bulkNSplot_vah.dat", ios::out);
 
 	taupiplot.open("taupiplot_vah.dat", ios::out);
 	taubulkplot.open("taubulkplot_vah.dat", ios::out);
@@ -209,8 +215,8 @@ int main()
 
 	eplot << "t [fm]" << "\t\t" << "e/e0" << endl << setprecision(5) << t << "\t\t" << e/e0 << endl;
 	piplot << "t [fm]" << "\t\t" << "pi [fm^-4]" << endl << setprecision(5) << t << "\t\t" << 2.0*(pt-pl)/3.0 << endl;
-	bulkplot << "t [fm]" << "\t\t" << "Pi [fm^-4]" << endl << setprecision(5) << t << "\t\t" << (2.0*pt/3.0 + pl/3.0 - B - p) << endl;
-	plptplot << "t [fm]" << "\t\t" << "PL/PT" << endl << setprecision(5) << t << "\t\t" << (pl - B) / (pt - B) << endl;
+	bulkplot << "t [fm]" << "\t\t" << "Pi [fm^-4]" << endl << setprecision(5) << t << "\t\t" << (2.0*pt/3.0 + pl/3.0 - p) << endl;
+	plptplot << "t [fm]" << "\t\t" << "PL/PT" << endl << setprecision(5) << t << "\t\t" << pl/pt << endl;
 
 	Tplot << "t [fm]" << "\t\t" << "T [fm^-1]" << endl << setprecision(5) << t << "\t\t" << T << endl;
 	lambdaplot << "t [fm]" << "\t\t" << "lambda [fm^-1]" << endl << setprecision(5) << t << "\t\t" << lambda << endl;
@@ -218,46 +224,46 @@ int main()
 	azplot << "t [fm]" << "\t\t" << "az" << endl << setprecision(5) << t << "\t\t" << az << endl;
 
 	RpiInvplot << "t [fm]" << "\t\t" << "R_pi^-1" << endl << setprecision(5) << t << "\t\t" << sqrt(1.5) * 2.0*(pt-pl)/3.0 / p << endl;
-	RbulkInvplot << "t [fm]" << "\t\t" << "R_Pi^-1" << endl << setprecision(5) << t << "\t\t" << (2.0*pt/3.0 + pl/3.0 - B - p) / p << endl;
+	RbulkInvplot << "t [fm]" << "\t\t" << "R_Pi^-1" << endl << setprecision(5) << t << "\t\t" << (2.0*pt/3.0 + pl/3.0 - p) / p << endl;
 
-	//piNSplot << "t [fm]" << "\t\t" << "piNS" << endl << setprecision(5) << t << "\t\t" << piNS << endl;
-	//bulkNSplot << "t [fm]" << "\t\t" << "bulkNS" << endl << setprecision(5) << t << "\t\t" << bulkNS << endl;
+	piNSplot << "t [fm]" << "\t\t" << "R_piNS^-1" << endl << setprecision(5) << t << "\t\t" << sqrt(1.5)*piNS/p << endl;
+	bulkNSplot << "t [fm]" << "\t\t" << "R_bulkNS^-1" << endl << setprecision(5) << t << "\t\t" << bulkNS/p << endl;
 
 	taupiplot << "t [fm]" << "\t\t" << "tau_pi" << endl << setprecision(5) << t << "\t\t" << taupi << endl;
 	taubulkplot << "t [fm]" << "\t\t" << "tau_Pi" << endl << setprecision(5) << t << "\t\t" << taubulk << endl;
 
-	Bplot << "t [fm]" << "\t\t" << "B" << endl << setprecision(5) << t << "\t\t" << B << endl;
-	Beqplot << "t [fm]" << "\t\t" << "Beq" << endl << setprecision(5) << t << "\t\t" << Beq << endl;
-	dBasyplot << "t [fm]" << "\t\t" << "dB2nd" << endl << setprecision(5) << t << "\t\t" << dBasy << endl;
+	Bplot << "t [fm]" << "\t\t" << "B" << endl << setprecision(5) << t << "\t\t" << b << endl;
+	Beqplot << "t [fm]" << "\t\t" << "Beq" << endl << setprecision(5) << t << "\t\t" << beq << endl;
+	dBasyplot << "t [fm]" << "\t\t" << "dB2nd" << endl << setprecision(5) << t << "\t\t" << dbasy << endl;
 
 	//evolution
 	for(int i = 0; i < n; i++)
 	{
 		try{
 			// compute intermediate values with Euler step
-			Ttt_mid = Ttt + dt * dTtt_dt(Ttt,Ttx,Tty,Ttn,pl,pt,B,ut,ux,uy,un,e,p,lambda,ax,az,t);
-			Ttx_mid = Ttx + dt * dTtx_dt(Ttt,Ttx,Tty,Ttn,pl,pt,B,ut,ux,uy,un,e,p,lambda,ax,az,t);
-			Tty_mid = Tty + dt * dTty_dt(Ttt,Ttx,Tty,Ttn,pl,pt,B,ut,ux,uy,un,e,p,lambda,ax,az,t);
-			Ttn_mid = Ttn + dt * dTtn_dt(Ttt,Ttx,Tty,Ttn,pl,pt,B,ut,ux,uy,un,e,p,lambda,ax,az,t);
-			pl_mid = pl + dt * dpl_dt(Ttt,Ttx,Tty,Ttn,pl,pt,B,ut,ux,uy,un,e,p,lambda,ax,az,t);
-			pt_mid = pt + dt * dpt_dt(Ttt,Ttx,Tty,Ttn,pl,pt,B,ut,ux,uy,un,e,p,lambda,ax,az,t);
-			B_mid = B + dt * dB_dt(Ttt,Ttx,Tty,Ttn,pl,pt,B,ut,ux,uy,un,e,p,lambda,ax,az,t);
+			Ttt_mid = Ttt + dt * dTtt_dt(Ttt,Ttx,Tty,Ttn,pl,pt,b,ut,ux,uy,un,e,p,lambda,ax,az,t);
+			Ttx_mid = Ttx + dt * dTtx_dt(Ttt,Ttx,Tty,Ttn,pl,pt,b,ut,ux,uy,un,e,p,lambda,ax,az,t);
+			Tty_mid = Tty + dt * dTty_dt(Ttt,Ttx,Tty,Ttn,pl,pt,b,ut,ux,uy,un,e,p,lambda,ax,az,t);
+			Ttn_mid = Ttn + dt * dTtn_dt(Ttt,Ttx,Tty,Ttn,pl,pt,b,ut,ux,uy,un,e,p,lambda,ax,az,t);
+			pl_mid = pl + dt * dpl_dt(Ttt,Ttx,Tty,Ttn,pl,pt,b,ut,ux,uy,un,e,p,lambda,ax,az,t);
+			pt_mid = pt + dt * dpt_dt(Ttt,Ttx,Tty,Ttn,pl,pt,b,ut,ux,uy,un,e,p,lambda,ax,az,t);
+			b_mid = b + dt * db_dt(Ttt,Ttx,Tty,Ttn,pl,pt,b,ut,ux,uy,un,e,p,lambda,ax,az,t);
 
 
 			// find intermediate inferred and anisotropic variables
-			get_inferred_variables(Ttt_mid,Ttx_mid,Tty_mid,Ttn_mid,pl_mid,pt_mid,B_mid,&ut,&ux,&uy,&un,&e,&p,t+dt);
+			get_inferred_variables(Ttt_mid,Ttx_mid,Tty_mid,Ttn_mid,pl_mid,pt_mid,b_mid,&ut,&ux,&uy,&un,&e,&p,t+dt);
 
-			get_anisotropic_variables(e,pl_mid,pt_mid,B_mid,&lambda,&ax,&az);
+			get_anisotropic_variables(e,pl_mid,pt_mid,b_mid,&lambda,&ax,&az);
 
 
 			// add Euler step with respect to the intermediate value
-			Ttt_end = Ttt_mid + dt * dTtt_dt(Ttt_mid,Ttx_mid,Tty_mid,Ttn_mid,pl_mid,pt_mid,B_mid,ut,ux,uy,un,e,p,lambda,ax,az,t+dt);
-			Ttx_end = Ttx_mid + dt * dTtx_dt(Ttt_mid,Ttx_mid,Tty_mid,Ttn_mid,pl_mid,pt_mid,B_mid,ut,ux,uy,un,e,p,lambda,ax,az,t+dt);
-			Tty_end = Tty_mid + dt * dTty_dt(Ttt_mid,Ttx_mid,Tty_mid,Ttn_mid,pl_mid,pt_mid,B_mid,ut,ux,uy,un,e,p,lambda,ax,az,t+dt);
-			Ttn_end = Ttn_mid + dt * dTty_dt(Ttt_mid,Ttx_mid,Tty_mid,Ttn_mid,pl_mid,pt_mid,B_mid,ut,ux,uy,un,e,p,lambda,ax,az,t+dt);
-			pl_end = pl_mid + dt * dpl_dt(Ttt_mid,Ttx_mid,Tty_mid,Ttn_mid,pl_mid,pt_mid,B_mid,ut,ux,uy,un,e,p,lambda,ax,az,t+dt);
-			pt_end = pt_mid + dt * dpt_dt(Ttt_mid,Ttx_mid,Tty_mid,Ttn_mid,pl_mid,pt_mid,B_mid,ut,ux,uy,un,e,p,lambda,ax,az,t+dt);
-			B_end = B_mid + dt * dB_dt(Ttt_mid,Ttx_mid,Tty_mid,Ttn_mid,pl_mid,pt_mid,B_mid,ut,ux,uy,un,e,p,lambda,ax,az,t+dt);
+			Ttt_end = Ttt_mid + dt * dTtt_dt(Ttt_mid,Ttx_mid,Tty_mid,Ttn_mid,pl_mid,pt_mid,b_mid,ut,ux,uy,un,e,p,lambda,ax,az,t+dt);
+			Ttx_end = Ttx_mid + dt * dTtx_dt(Ttt_mid,Ttx_mid,Tty_mid,Ttn_mid,pl_mid,pt_mid,b_mid,ut,ux,uy,un,e,p,lambda,ax,az,t+dt);
+			Tty_end = Tty_mid + dt * dTty_dt(Ttt_mid,Ttx_mid,Tty_mid,Ttn_mid,pl_mid,pt_mid,b_mid,ut,ux,uy,un,e,p,lambda,ax,az,t+dt);
+			Ttn_end = Ttn_mid + dt * dTty_dt(Ttt_mid,Ttx_mid,Tty_mid,Ttn_mid,pl_mid,pt_mid,b_mid,ut,ux,uy,un,e,p,lambda,ax,az,t+dt);
+			pl_end = pl_mid + dt * dpl_dt(Ttt_mid,Ttx_mid,Tty_mid,Ttn_mid,pl_mid,pt_mid,b_mid,ut,ux,uy,un,e,p,lambda,ax,az,t+dt);
+			pt_end = pt_mid + dt * dpt_dt(Ttt_mid,Ttx_mid,Tty_mid,Ttn_mid,pl_mid,pt_mid,b_mid,ut,ux,uy,un,e,p,lambda,ax,az,t+dt);
+			b_end = b_mid + dt * db_dt(Ttt_mid,Ttx_mid,Tty_mid,Ttn_mid,pl_mid,pt_mid,b_mid,ut,ux,uy,un,e,p,lambda,ax,az,t+dt);
 
 
 			// increase time step
@@ -271,22 +277,22 @@ int main()
 			Ttn = 0.5 * (Ttn + Ttn_end);
 			pl = 0.5 * (pl + pl_end);
 			pt = 0.5 * (pt + pt_end);
-			B = 0.5 * (B + B_end);
+			b = 0.5 * (b + b_end);
 
 
 			// find inferred variables at new time step
-			get_inferred_variables(Ttt,Ttx,Tty,Ttn,pl,pt,B,&ut,&ux,&uy,&un,&e,&p,t);
-			get_anisotropic_variables(e,pl,pt,B,&lambda,&ax,&az);
+			get_inferred_variables(Ttt,Ttx,Tty,Ttn,pl,pt,b,&ut,&ux,&uy,&un,&e,&p,t);
+			get_anisotropic_variables(e,pl,pt,b,&lambda,&ax,&az);
 
 
 			T = effectiveTemperature(e);
 			cs2 = speedOfSoundSquared(e);
 			s = (e+p)/T;
-			Beq = equilibriumBquasi(T);
+			beq = equilibriumBquasi(T);
 			m = T * z_Quasiparticle(T);
 
-			//piNS = 4.0 * (e+p) / (3.0*T*t) * shearViscosityToEntropyDensity(T);
-			//bulkNS = - (e+p) / (t*T) * bulkViscosityToEntropyDensity(T);
+			piNS = 4.0 * (e+p) / (3.0*T*t) * shearViscosityToEntropyDensity(T);
+			bulkNS = - (e+p) / (t*T) * bulkViscosityToEntropyDensity(T);
 
 			// quasiparticle model
 			taupi = s * shearViscosityToEntropyDensity(T) / beta_shear(T);
@@ -295,8 +301,11 @@ int main()
 			//dBasy = -3.0*taubulk*(cs2/s)*mdmdT_Quasiparticle(T)*(e+pl-B)*(2.0*pt/3.0+pl/3.0-B-p)/(t*m*m) /
 			//(1.0 + 4.0*taubulk*(cs2/s)*mdmdT_Quasiparticle(T)*(e+pl-B)/(t*m*m));
 
-			dBasy = -3.0*taubulk*mdmde_Quasiparticle(e)*(e+pl-B)*(2.0*pt/3.0+pl/3.0-B-p)/(t*m*m) /
-			(1.0 + 4.0*taubulk*mdmde_Quasiparticle(e)*(e+pl-B)/(t*m*m));
+			// dBasy = -3.0*taubulk*mdmde_Quasiparticle(e)*(e+pl-B)*(2.0*pt/3.0+pl/3.0-B-p)/(t*m*m) /
+			// (1.0 + 4.0*taubulk*mdmde_Quasiparticle(e)*(e+pl-B)/(t*m*m));
+
+			dbasy = -3.0*taubulk*mdmde_Quasiparticle(e)*(e+pl)*(2.0*pt/3.0+pl/3.0-p)/(t*m*m) /
+			(1.0 + 4.0*taubulk*mdmde_Quasiparticle(e)*(e+pl)/(t*m*m));
 
 			// write data to file
 			if((i+1)%timesteps_per_write == 0)
@@ -304,8 +313,8 @@ int main()
 				// energy density, etc
 				eplot << setprecision(5) << t << "\t\t" << e/e0 << "\t\t" << endl;
 				piplot << setprecision(5) << t << "\t\t" << 2.0*(pt-pl)/3.0 << "\t\t" << endl;
-				bulkplot << setprecision(5) << t << "\t\t" << (2.0*pt/3.0 + pl/3.0 - B - p) << "\t\t" << endl;
-				plptplot << setprecision(5) << t << "\t\t" << (pl - B) / (pt - B) << "\t\t" << endl;
+				bulkplot << setprecision(5) << t << "\t\t" << (2.0*pt/3.0 + pl/3.0 - p) << "\t\t" << endl;
+				plptplot << setprecision(5) << t << "\t\t" << pl/pt << "\t\t" << endl;
 
 				// temperature and anisotropic variables
 				Tplot << setprecision(5) << t << "\t\t" << T << "\t\t" << endl;
@@ -315,17 +324,17 @@ int main()
 
 				// inverse Reynolds numbers
 				RpiInvplot << setprecision(5) << t << "\t\t" << sqrt(1.5) * 2.0*(pt-pl)/3.0 / p << "\t\t" << endl;
-				RbulkInvplot << setprecision(5) << t << "\t\t" << (2.0*pt/3.0 + pl/3.0 - B - p) / p  << "\t\t" << endl;
+				RbulkInvplot << setprecision(5) << t << "\t\t" << (2.0*pt/3.0 + pl/3.0 - p) / p  << "\t\t" << endl;
 
-				//piNSplot << setprecision(5) << t << "\t\t" << piNS << "\t\t" << endl;
-				//bulkNSplot << setprecision(5) << t << "\t\t" << bulkNS  << "\t\t" << endl;
+				piNSplot << setprecision(5) << t << "\t\t" << sqrt(1.5)*piNS/p << "\t\t" << endl;
+				bulkNSplot << setprecision(5) << t << "\t\t" << bulkNS/p  << "\t\t" << endl;
 
 				taupiplot << setprecision(5) << t << "\t\t" << taupi << "\t\t" << endl;
 				taubulkplot << setprecision(5) << t << "\t\t" << taubulk  << "\t\t" << endl;
 
-				Bplot << setprecision(5) << t << "\t\t" << B  << "\t\t" << endl;
-				Beqplot << setprecision(5) << t << "\t\t" << Beq  << "\t\t" << endl;
-				dBasyplot << setprecision(5) << t << "\t\t" << dBasy  << "\t\t" << endl;
+				Bplot << setprecision(5) << t << "\t\t" << b  << "\t\t" << endl;
+				Beqplot << setprecision(5) << t << "\t\t" << beq  << "\t\t" << endl;
+				dBasyplot << setprecision(5) << t << "\t\t" << dbasy  << "\t\t" << endl;
 			}
 
 		} catch (char const *excp)  {
@@ -348,8 +357,8 @@ int main()
 	RpiInvplot.close();
 	RbulkInvplot.close();
 
-	//piNSplot.close();
-	//bulkNSplot.close();
+	piNSplot.close();
+	bulkNSplot.close();
 
 	taupiplot.close();
 	taubulkplot.close();
