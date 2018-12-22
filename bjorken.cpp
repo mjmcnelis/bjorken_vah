@@ -89,9 +89,9 @@ int main()
 
 
 	// input parameters
-	double T0 = 0.145 * GEV_TO_INVERSE_FM;  // initial temperature in fm^-1
+	double T0 = 0.5 * GEV_TO_INVERSE_FM;  // initial temperature in fm^-1
 	double t0 = 0.25;				      // initial time in fm
-	double tf = 20.0;					  // final time in fm
+	double tf = 100.0;					  // final time in fm
 
 
 
@@ -105,12 +105,10 @@ int main()
 	double s = (e+p)/T;
 	double cs2 = speedOfSoundSquared(e);
 	double beq = equilibriumBquasi(T);
+	double m = T * z_Quasiparticle(T);
 
 
-	cout << e << endl;
-	exit(-1);
-
-	//cout << setprecision(8) << e/p << "\t" << p/e << endl;
+	//cout << e << endl;
 	//exit(-1);
 
 	// viscosities and relaxation times
@@ -129,38 +127,22 @@ int main()
 	double Tty = 0.0;
 	double Ttn = 0.0;
 
-
 	// initial flow profile
 	double ut = 1.0;
 	double ux = 0.0;
 	double uy = 0.0;
 	double un = 0.0;
 
-
 	// Glasma initial conditions
-	double plptratio = 0.03;
+	double plptratio = 0.02;
 	double pt = (3.0/(2.0+plptratio)) * e / 3.0;
 	double pl = (3.0 - 6.0/(2.0+plptratio)) * e / 3.0;
 
-	//pl = p;
-	//pt = p;
-
-	//cout << Beq / p << endl;
-
-	double m = T * z_Quasiparticle(T);
-
-	// cout << m / GEV_TO_INVERSE_FM << endl;
-	// cout << beta_shear(T) << endl;
-	// cout << beta_bulk(T) << endl;
-
-	//double dBasy = -3.0*taubulk*mdmde_Quasiparticle(e)*(e+PL)*(2.0*PT/3.0+PL/3.0-p)/(t0*m*m) /
-	//		(1.0 + 4.0*taubulk*mdmde_Quasiparticle(e)*(e+PL)/(t0*m*m));
 
 	double dbasy = -3.0*taubulk*mdmde_Quasiparticle(e)*(e+pl)*(2.0*pt/3.0+pl/3.0-p)/(t0*m*m) /
 			(1.0 + 4.0*taubulk*mdmde_Quasiparticle(e)*(e+pl)/(t0*m*m));
 
-
-	cout << beq + dbasy << endl;
+	//cout << beq + dbasy << endl;
 
 	double b_default = (beq + dbasy);
 
@@ -168,93 +150,102 @@ int main()
 	//cout << "pt_kin = " << pt + b << endl;
 	//cout << "e_kin = " << e - b << endl;
 
-	// double pl = PL + B;
-	// double pt = PT + B;
 	double lambda = T;
 	double ax = 1.0;
 	double az = 1.0;
+	double b;
+	if(plptratio > 0.08) b = b_default;
+	else b = b_default * (0.14 + (1.0 - 0.14) * (plptratio - 0.01) / 0.07);
 
-	int N = 50;
+	//b = 0.14 * b_default;
 
-	double frac_last = 1.0;
+	//cout << 0.2 * beq / b_default << endl;
 
-	int default_counter = 1;	// assume default b solves equation
-
-	// try solving default equation
-	try
-	{
-	get_anisotropic_variables(e, pl, pt, b_default, &lambda, &ax, &az);
-	}
-	catch (char const *excp)
-	{
-        	cout << "\nInitialization error: " << excp;
-        	cout << endl << "Increasing mean field..." << endl;
-        	default_counter = 0;
-    }
-
-    // increase b until 1st solution found
-    if(!default_counter)
-    {
-    	int modb_counter = 1;	// assume modified b solves equation
-    	//int modb_min_counter = 0;
-    	int modb_1st_counter = 0;
-
-    	//double lambda = T;
-    	//double ax = 1.0;
-    	//double az = 1.0;
-
-    	for(int i = 1; i < N; i++)
-		{
-			double del = 1.0 / (double) N;
-			double frac = 1.0 - (double)i * del;
-
-			double b = frac * b_default;
-
-			double lambda = T;
-			double ax = 1.0;
-			double az = 1.0;
-
-			// I can make it faster if I kept track of the updated variables
-			// why did it crash?
+	// int N = 100;
 
 
-			// note: I want the two fracs to be different by a fair amount so I might want to decrease N. Otherwise the code might not run.
+	// double frac_first = 1.0;
+	// double frac_last = 1.0;
 
-			try
-			{
-				modb_counter = 1; // try assumed solution
-				get_anisotropic_variables(e, pl, pt, b, &lambda, &ax, &az);
+	// int default_counter = 1;	// assume default b solves equation
+
+	// // try solving default equation
+	// try
+	// {
+	// get_anisotropic_variables(e, pl, pt, b_default, &lambda, &ax, &az);
+	// }
+	// catch (char const *excp)
+	// {
+ //        	cout << "\nInitialization error: " << excp;
+ //        	cout << endl << "Increasing mean field..." << endl;
+ //        	default_counter = 0;
+ //    }
+
+ //    // increase b until 1st solution found
+ //    if(!default_counter)
+ //    {
+ //    	int modb_counter = 1;	// assume modified b solves equation
+ //    	//int modb_min_counter = 0;
+ //    	int modb_1st_counter = 0;
+
+ //    	//double lambda = T;
+ //    	//double ax = 1.0;
+ //    	//double az = 1.0;
+
+ //    	for(int i = 1; i < N; i++)
+	// 	{
+	// 		double del = 1.0 / (double) N;
+	// 		double frac = 1.0 - (double)i * del;
+
+	// 		double b = frac * b_default;
+
+	// 		double lambda = T;
+	// 		double ax = 1.0;
+	// 		double az = 1.0;
+
+	// 		// I can make it faster if I kept track of the updated variables
+	// 		// why did it crash?
 
 
-			}
-			catch (char const *excp)
-			{
-				//cout << "\nInitialization error: " << excp;
-		        modb_counter = 0; // not the solution
-		    }
+	// 		// note: I want the two fracs to be different by a fair amount so I might want to decrease N. Otherwise the code might not run.
 
-		    if(modb_counter && modb_1st_counter == 0)
-		    {
-		    	modb_1st_counter = 1;
-		    	cout << "Found 1st solution at frac = " << setprecision(5) << frac << endl;
-		    }
+	// 		try
+	// 		{
+	// 			modb_counter = 1; // try assumed solution
+	// 			get_anisotropic_variables(e, pl, pt, b, &lambda, &ax, &az);
 
-		    if(modb_counter == 0 && modb_1st_counter == 1)
-		    {
-		    	cout << "Found last solution at frac = " << setprecision(5) << frac + del << endl;
 
-		    	frac_last = frac + del;
+	// 		}
+	// 		catch (char const *excp)
+	// 		{
+	// 			//cout << "\nInitialization error: " << excp;
+	// 	        modb_counter = 0; // not the solution
+	// 	    }
 
-		    	break;
-		    }
-		}
-    }
+	// 	    if(modb_counter && modb_1st_counter == 0)
+	// 	    {
+	// 	    	modb_1st_counter = 1;
+	// 	    	cout << "Found 1st solution at frac = " << setprecision(5) << frac << endl;
+	// 	    	frac_first = frac - del;
+	// 	    }
 
-	lambda = T;
-	ax = 1.0;
-	az = 1.0;
+	// 	    if(modb_counter == 0 && modb_1st_counter == 1)
+	// 	    {
+	// 	    	cout << "Found last solution at frac = " << setprecision(5) << frac + del << endl;
 
-	double b = frac_last * b_default;
+	// 	    	frac_last = frac + del;
+
+	// 	    	break;
+	// 	    }
+	// 	}
+ //    }
+
+	// lambda = T;
+	// ax = 1.0;
+	// az = 1.0;
+
+	// //double b = frac_first * b_default;
+	// double b = frac_last * b_default;
 
 	try
 	{
@@ -267,7 +258,7 @@ int main()
     }
 
     cout << "\nT = " << T << endl;
-	cout << "lambda = " << setprecision(3) << lambda / GEV_TO_INVERSE_FM << " * GEV_TO_INVERSE_FM;" << endl;
+	cout << "lambda = " << setprecision(4) << lambda / GEV_TO_INVERSE_FM << " * GEV_TO_INVERSE_FM;" << endl;
 	cout << "ax = " << ax << ";" << endl;
 	cout << "az = " << az << ";" <<endl;
 	cout << "b/beq = " << b / beq << endl;

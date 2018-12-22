@@ -475,7 +475,7 @@ void get_anisotropic_variables(double e, double pl, double pt, double b, double 
 	double dXabs;             // magnitude of dX
 	double Fabs;		      // magnitude of F
 	double toldX = 1.0e-6;    // tolerance for dX ~ 0
-	double tolF = 1.0e-12;    // tolerance for F ~ 0
+	double tolF = 1.0e-8;    // tolerance for F ~ 0
 	double tolmin = 1.0e-6;   // tolerance for spurious convergence to local min of f = F*F/2
 	double stepmax = 100.0;   // scaled maximum step length allowed in line searches (I don't know what this means...)
 	double gprime0;           // descent derivative at Xcurrent
