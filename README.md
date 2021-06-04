@@ -22,7 +22,7 @@ The output is written to `results`. You can transfer the data for plotting by do
 
     sh copy_results.sh equilibrium    # or glasma
    
-You can compare the results to second-order viscous hydrodynamics (computed by [Bjorken VH](https://github.com/mjmcnelis/bjorken_vhydro-)) with the Mathematica notebooks in `plot`.
+You can compare the results to second-order viscous hydrodynamics (computed by [bjorken_vh](https://github.com/mjmcnelis/bjorken_vhydro-)) with the Mathematica notebooks in `plot`.
 
 Note: the `GLASMA` macro in `bjorken.cpp` controls the Bjorken initial conditions.
 
