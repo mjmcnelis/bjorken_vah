@@ -16,11 +16,11 @@ using namespace std;
 #include "anisotropicvariables.hpp"
 #include "anisotropic_transport.hpp"
 
-//#include <gsl/gsl_sf.h>
-
-
 #define GEV_TO_INVERSE_FM 5.067731
-//temporary
+
+#define GLASMA 0								// 0 = equilibrium initial conditions, 1 = Glasma initial conditions
+
+
 const int alpha = 21;
 const int gla_pts = 64;
 double root_gla[alpha][gla_pts];
@@ -56,45 +56,10 @@ int main()
     double duration;
     begin = clock();
 
- // 	int num_error;
-	// // // Load gauss laguerre roots-weights
-	// if((num_error = load_gauss_laguerre_data()) != 0)
-	// {
-	// 	fprintf(stderr, "Error loading gauss data (%d)!\n", num_error);
-	// 	return 1;
-	// }
-
-	//for(int k = 0; k < gla_pts; k++) cout << setprecision(15) << root_gla[3][k] << ",";
-	//printf("\n\n\n");
-	//for(int k = 0; k < gla_pts; k++) cout << setprecision(15) << weight_gla[3][k] << ",";
-
-
-    // int i;
-    // for(i = 0; i < 10; i++)
-    // {
-    // 	if(i == 7)
-    // 	{
-    // 		cout << "Can see before break" << endl;
-    // 		break;
-    // 	}
-    // 	if(i == 7)
-    // 	{
-    // 		cout << "Can't see after break" << endl;
-    // 	}
-    // }
-
-    // cout << i << endl;
-
-    //exit(-1);
-
-
 	// input parameters
 	double T0 = 0.5 * GEV_TO_INVERSE_FM;  // initial temperature in fm^-1
 	double t0 = 0.25;				      // initial time in fm
 	double tf = 100.0;					  // final time in fm
-
-
-
 
 	// thermodynamic quantities
 	double T = T0;
@@ -105,11 +70,7 @@ int main()
 	double s = (e+p)/T;
 	double cs2 = speedOfSoundSquared(e);
 	double beq = equilibriumBquasi(T);
-	double m = T * z_Quasiparticle(T);
 
-
-	//cout << e << endl;
-	//exit(-1);
 
 	// viscosities and relaxation times
 	double zetas = bulkViscosityToEntropyDensity(T);
@@ -127,125 +88,41 @@ int main()
 	double Tty = 0.0;
 	double Ttn = 0.0;
 
+
 	// initial flow profile
 	double ut = 1.0;
 	double ux = 0.0;
 	double uy = 0.0;
 	double un = 0.0;
 
-	// Glasma initial conditions
-	double plptratio = 0.02;
+
+#if (GLASMA == 1)
+	double plptratio = 0.01;
 	double pt = (3.0/(2.0+plptratio)) * e / 3.0;
 	double pl = (3.0 - 6.0/(2.0+plptratio)) * e / 3.0;
+#else
+	double pl = p;
+	double pt = p;
+#endif
 
 
-	double dbasy = -3.0*taubulk*mdmde_Quasiparticle(e)*(e+pl)*(2.0*pt/3.0+pl/3.0-p)/(t0*m*m) /
+	double m = T * z_Quasiparticle(T);
+
+	double dbasy = -3.0*taubulk*mdmde_Quasiparticle(e)*(e+pl)*(2.*pt/3. + pl/3. - p)/(t0*m*m) /
 			(1.0 + 4.0*taubulk*mdmde_Quasiparticle(e)*(e+pl)/(t0*m*m));
 
-	//cout << beq + dbasy << endl;
+	double b = beq + dbasy;
 
-	double b_default = (beq + dbasy);
-
-	//cout << "pl_kin = " << pl + b << endl;
-	//cout << "pt_kin = " << pt + b << endl;
-	//cout << "e_kin = " << e - b << endl;
+#if (GLASMA == 1)
+	b *= 0.15;
+#endif
 
 	double lambda = T;
 	double ax = 1.0;
 	double az = 1.0;
-	double b;
-	if(plptratio > 0.08) b = b_default;
-	else b = b_default * (0.14 + (1.0 - 0.14) * (plptratio - 0.01) / 0.07);
-
-	//b = 0.14 * b_default;
-
-	//cout << 0.2 * beq / b_default << endl;
-
-	// int N = 100;
 
 
-	// double frac_first = 1.0;
-	// double frac_last = 1.0;
 
-	// int default_counter = 1;	// assume default b solves equation
-
-	// // try solving default equation
-	// try
-	// {
-	// get_anisotropic_variables(e, pl, pt, b_default, &lambda, &ax, &az);
-	// }
-	// catch (char const *excp)
-	// {
- //        	cout << "\nInitialization error: " << excp;
- //        	cout << endl << "Increasing mean field..." << endl;
- //        	default_counter = 0;
- //    }
-
- //    // increase b until 1st solution found
- //    if(!default_counter)
- //    {
- //    	int modb_counter = 1;	// assume modified b solves equation
- //    	//int modb_min_counter = 0;
- //    	int modb_1st_counter = 0;
-
- //    	//double lambda = T;
- //    	//double ax = 1.0;
- //    	//double az = 1.0;
-
- //    	for(int i = 1; i < N; i++)
-	// 	{
-	// 		double del = 1.0 / (double) N;
-	// 		double frac = 1.0 - (double)i * del;
-
-	// 		double b = frac * b_default;
-
-	// 		double lambda = T;
-	// 		double ax = 1.0;
-	// 		double az = 1.0;
-
-	// 		// I can make it faster if I kept track of the updated variables
-	// 		// why did it crash?
-
-
-	// 		// note: I want the two fracs to be different by a fair amount so I might want to decrease N. Otherwise the code might not run.
-
-	// 		try
-	// 		{
-	// 			modb_counter = 1; // try assumed solution
-	// 			get_anisotropic_variables(e, pl, pt, b, &lambda, &ax, &az);
-
-
-	// 		}
-	// 		catch (char const *excp)
-	// 		{
-	// 			//cout << "\nInitialization error: " << excp;
-	// 	        modb_counter = 0; // not the solution
-	// 	    }
-
-	// 	    if(modb_counter && modb_1st_counter == 0)
-	// 	    {
-	// 	    	modb_1st_counter = 1;
-	// 	    	cout << "Found 1st solution at frac = " << setprecision(5) << frac << endl;
-	// 	    	frac_first = frac - del;
-	// 	    }
-
-	// 	    if(modb_counter == 0 && modb_1st_counter == 1)
-	// 	    {
-	// 	    	cout << "Found last solution at frac = " << setprecision(5) << frac + del << endl;
-
-	// 	    	frac_last = frac + del;
-
-	// 	    	break;
-	// 	    }
-	// 	}
- //    }
-
-	// lambda = T;
-	// ax = 1.0;
-	// az = 1.0;
-
-	// //double b = frac_first * b_default;
-	// double b = frac_last * b_default;
 
 	try
 	{
@@ -253,17 +130,15 @@ int main()
 	}
 	catch (char const *excp)
 	{
-        	cout << "\nInitialization error: " << excp;
+        	cout << "\nInitialization error before run: " << excp;
         	exit(-1);
     }
 
-    cout << "\nT = " << T << endl;
-	cout << "lambda = " << setprecision(4) << lambda / GEV_TO_INVERSE_FM << " * GEV_TO_INVERSE_FM;" << endl;
+    cout << "\nT = " << T << " fm^-1" << endl;
+	cout << "lambda = " << lambda << " fm^-1" << endl;
 	cout << "ax = " << ax << ";" << endl;
 	cout << "az = " << az << ";" <<endl;
 	cout << "b/beq = " << b / beq << endl;
-
-	//exit(-1);
 
 
 	// intermediate and end values
@@ -278,7 +153,7 @@ int main()
 
 	// time data (t = tau)
 	double t = t0;
-	const double dt = 0.001;
+	const double dt = 0.005;
 	const int n = floor((tf - t0) / dt);
 	const int timesteps_per_write = 10;
 
@@ -292,28 +167,28 @@ int main()
 	ofstream taupiplot, taubulkplot;
 	ofstream Bplot, Beqplot, dBasyplot;
 
-	eplot.open("eplot_vah.dat", ios::out);
-	piplot.open("piplot_vah.dat", ios::out);
-	bulkplot.open("bulkplot_vah.dat", ios::out);
-	plptplot.open("plptplot_vah.dat", ios::out);
+	eplot.open("results/eplot_vah.dat", ios::out);
+	piplot.open("results/piplot_vah.dat", ios::out);
+	bulkplot.open("results/bulkplot_vah.dat", ios::out);
+	plptplot.open("results/plptplot_vah.dat", ios::out);
 
-	Tplot.open("Tplot_vah.dat", ios::out);
-	lambdaplot.open("lambdaplot_vah.dat", ios::out);
-	axplot.open("axplot_vah.dat", ios::out);
-	azplot.open("azplot_vah.dat", ios::out);
+	Tplot.open("results/Tplot_vah.dat", ios::out);
+	lambdaplot.open("results/lambdaplot_vah.dat", ios::out);
+	axplot.open("results/axplot_vah.dat", ios::out);
+	azplot.open("results/azplot_vah.dat", ios::out);
 
-	RpiInvplot.open("RpiInvplot_vah.dat", ios::out);
-	RbulkInvplot.open("RbulkInvplot_vah.dat", ios::out);
+	RpiInvplot.open("results/RpiInvplot_vah.dat", ios::out);
+	RbulkInvplot.open("results/RbulkInvplot_vah.dat", ios::out);
 
-	piNSplot.open("piNSplot_vah.dat", ios::out);
-	bulkNSplot.open("bulkNSplot_vah.dat", ios::out);
+	piNSplot.open("results/piNSplot_vah.dat", ios::out);
+	bulkNSplot.open("results/bulkNSplot_vah.dat", ios::out);
 
-	taupiplot.open("taupiplot_vah.dat", ios::out);
-	taubulkplot.open("taubulkplot_vah.dat", ios::out);
+	taupiplot.open("results/taupiplot_vah.dat", ios::out);
+	taubulkplot.open("results/taubulkplot_vah.dat", ios::out);
 
-	Bplot.open("Bplot_vah.dat", ios::out);
-	Beqplot.open("Beqplot_vah.dat", ios::out);
-	dBasyplot.open("dBasyplot_vah.dat", ios::out);
+	Bplot.open("results/Bplot_vah.dat", ios::out);
+	Beqplot.open("results/Beqplot_vah.dat", ios::out);
+	dBasyplot.open("results/dBasyplot_vah.dat", ios::out);
 
 
 	eplot << "t [fm]" << "\t\t" << "e/e0" << endl << setprecision(5) << t << "\t\t" << e/e0 << endl;
@@ -356,7 +231,7 @@ int main()
 			// find intermediate inferred and anisotropic variables
 			get_inferred_variables(Ttt_mid,Ttx_mid,Tty_mid,Ttn_mid,pl_mid,pt_mid,b_mid,&ut,&ux,&uy,&un,&e,&p,t+dt);
 
-			get_anisotropic_variables(e,pl_mid,pt_mid,b_mid,&lambda,&ax,&az);
+			get_anisotropic_variables(e, pl_mid, pt_mid, b_mid, &lambda, &ax, &az);
 
 
 			// add Euler step with respect to the intermediate value
@@ -400,12 +275,6 @@ int main()
 			// quasiparticle model
 			taupi = s * shearViscosityToEntropyDensity(T) / beta_shear(T);
 			taubulk = s * bulkViscosityToEntropyDensity(T) / beta_bulk(T);
-
-			//dBasy = -3.0*taubulk*(cs2/s)*mdmdT_Quasiparticle(T)*(e+pl-B)*(2.0*pt/3.0+pl/3.0-B-p)/(t*m*m) /
-			//(1.0 + 4.0*taubulk*(cs2/s)*mdmdT_Quasiparticle(T)*(e+pl-B)/(t*m*m));
-
-			// dBasy = -3.0*taubulk*mdmde_Quasiparticle(e)*(e+pl-B)*(2.0*pt/3.0+pl/3.0-B-p)/(t*m*m) /
-			// (1.0 + 4.0*taubulk*mdmde_Quasiparticle(e)*(e+pl-B)/(t*m*m));
 
 			dbasy = -3.0*taubulk*mdmde_Quasiparticle(e)*(e+pl)*(2.0*pt/3.0+pl/3.0-p)/(t*m*m) /
 			(1.0 + 4.0*taubulk*mdmde_Quasiparticle(e)*(e+pl)/(t*m*m));

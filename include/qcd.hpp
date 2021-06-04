@@ -15,8 +15,8 @@
 #define CONSTANT_ETAS 0.08     // Brookhaven
 #define ETAS_MIN 0.08
 #define ETAS_SLOPE 0.167728    // Duke
-#define ZETA_NORM 1.25
-#define T_PEAK (0.154 * 5.067731)
+#define ZETA_NORM 1.00
+#define T_PEAK (0.155 * 5.067731)
 
 double equilibriumPressure(double e);
 double speedOfSoundSquared(double e);

@@ -45,7 +45,9 @@ $(EXE): $(OBJ)
 	echo "\nLinking   $@ ($(COMPILER))"
 	$(COMPILER) -o $@ $^ $(LIBS) $(INCLUDES)
 	echo "\nRunning...\n"
+	rm *.o
 	$(DIR_MAIN)$(EXE)
+# 	rm *.o
 
 $(DIR_OBJ)%.o: $(DIR_SRC)%.cpp
 	echo "Compiling $< ($(COMPILER))"
